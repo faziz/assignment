@@ -40,7 +40,8 @@ public class LoadMetaDataListener implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce) {
     }
 
-    private final Table<HttpMetod, String, ServiceMetaData> processServiceClasses(ServletContextEvent sce) {
+    private final Table<HttpMetod, String, ServiceMetaData> processServiceClasses(
+        ServletContextEvent sce) {
         Table<HttpMetod, String, ServiceMetaData> table = HashBasedTable.create();
         
         try {

@@ -13,7 +13,7 @@ public class UserList {
     /**
      * @return the users
      */
-    @XmlElement
+    @XmlElement(name="user")
     public List<User> getUsers() {
         return users;
     }
