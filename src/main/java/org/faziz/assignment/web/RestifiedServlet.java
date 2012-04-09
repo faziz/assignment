@@ -8,6 +8,8 @@ import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -190,8 +192,8 @@ public class RestifiedServlet extends HttpServlet {
         return "Servlet serving REST requests.";
     }// </editor-fold>
 
-    private final Object invokeService(HttpServletRequest request, ServiceMetaData metaData, 
-            EntityManagerFactory entityManagerFactory) throws NoSuchMethodException, 
+    private final Object invokeService(final HttpServletRequest request, final ServiceMetaData metaData, 
+            final EntityManagerFactory entityManagerFactory) throws NoSuchMethodException, 
             InstantiationException, 
             IllegalAccessException, 
             IllegalArgumentException, 
@@ -237,7 +239,7 @@ public class RestifiedServlet extends HttpServlet {
      * @throws JAXBException 
      */
     private final void writeXML(final Object data, final Writer writer) throws JAXBException, IOException {
-        JAXBContext context = JAXBContext.newInstance(User.class);
+        JAXBContext context = JAXBContext.newInstance(data.getClass());
         Marshaller marshaller = context.createMarshaller();
         
         StringWriter stringWriter = new StringWriter();

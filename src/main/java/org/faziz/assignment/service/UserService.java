@@ -1,9 +1,9 @@
 package org.faziz.assignment.service;
 
-import java.util.List;
 import java.util.Map;
 import org.faziz.assignment.domain.Address;
 import org.faziz.assignment.domain.User;
+import org.faziz.assignment.domain.UserList;
 
 /**
  *
@@ -17,7 +17,7 @@ public interface UserService {
 
     public User getUser(Map<String, String[]> param, int id);
     
-    public List<User> getAllUser(Map<String, String[]> param);
+    public UserList getAllUser(Map<String, String[]> param);
 
     public void deleteUser(Map<String, String[]> param, int id);
     

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -137,12 +138,13 @@ public class User implements Serializable {
         this.apiToken = apitoekn;
     }
 
-    public Address getAddressId() {
+    @XmlElement
+    public Address getAddress() {
         return address;
     }
 
-    public void setAddressId(Address addressId) {
-        this.address = addressId;
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     @Override

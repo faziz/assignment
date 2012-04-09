@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import org.faziz.assignment.domain.Address;
 import org.faziz.assignment.domain.User;
+import org.faziz.assignment.domain.UserList;
 import org.faziz.assignment.service.meta.Export;
 import org.faziz.assignment.service.meta.HttpMetod;
 
@@ -33,10 +34,15 @@ public class UserServiceImpl extends AbstractService implements UserService{
 
     @Override
     @Export(method = HttpMetod.GET, name = "/users", authenticate = false)
-    public List<User> getAllUser(Map<String, String[]> param) {
+    public UserList getAllUser(Map<String, String[]> param) {
         javax.persistence.criteria.CriteriaQuery cq = entityManager.getCriteriaBuilder().
                 createQuery(User.class);
-        return entityManager.createQuery(cq).getResultList();
+        List<User> resultList = entityManager.createQuery(cq).getResultList();
+        
+        UserList list = new UserList();
+        list.setUsers(resultList);
+        
+        return list;
     }
     
     @Override
