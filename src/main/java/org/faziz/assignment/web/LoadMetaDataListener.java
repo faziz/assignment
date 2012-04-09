@@ -1,5 +1,8 @@
 package org.faziz.assignment.web;
 
+import com.google.common.collect.ArrayTable;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -13,9 +16,10 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import org.faziz.assignment.service.meta.Export;
+import org.faziz.assignment.service.meta.HttpMetod;
 
 /**
- * Web application lifecycle listener.
+ * Web application lifecycle listener. Loads the REST request URI map on startup.
  *
  * @author faisal
  */
@@ -27,27 +31,40 @@ public class LoadMetaDataListener implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        processServiceClasses(sce);
+        Table<HttpMetod, String, ServiceMetaData> table = processServiceClasses(sce);
+        sce.getServletContext().setAttribute(ApplicationConstants.REQUEST_MAP, table);
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    private final void processServiceClasses(ServletContextEvent sce) {
+    private final Table<HttpMetod, String, ServiceMetaData> processServiceClasses(ServletContextEvent sce) {
+        Table<HttpMetod, String, ServiceMetaData> table = HashBasedTable.create();
+        
         try {
             Class[] classes = getClasses("org.faziz.assignment.service", sce);
             for (Class clazz : classes) {
-                logger.log(Level.INFO, "class name: {0}", clazz.getCanonicalName());
-                processServiceClass(clazz);
+                logger.log(Level.INFO, "class name: {0}", 
+                    clazz.getCanonicalName());
+                processServiceClass(clazz, table);
             }
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception occurred.", ex);
             throw new IllegalStateException("Exception occurred.", ex);
         }
+        
+        return table;
     }
 
+    /**
+     * Returns Array of classes from the given package name.
+     * @param packageName package name used to load the classes from.
+     * @param sce servlet context used for loading classes from.
+     * @return array of classes.
+     * @throws ClassNotFoundException
+     * @throws IOException 
+     */
     private final Class[] getClasses(String packageName, ServletContextEvent sce)
             throws ClassNotFoundException, IOException {
         ClassLoader classLoader = sce.getServletContext().getClassLoader();
@@ -55,10 +72,12 @@ public class LoadMetaDataListener implements ServletContextListener {
         String path = packageName.replace('.', '/');
         Enumeration<URL> resources = classLoader.getResources(path);
         List<File> dirs = new ArrayList<File>();
+        
         while (resources.hasMoreElements()) {
             URL resource = resources.nextElement();
             dirs.add(new File(resource.getFile()));
         }
+        
         ArrayList<Class> classes = new ArrayList<Class>();
         for (File directory : dirs) {
             classes.addAll(findClasses(directory, packageName));
@@ -68,7 +87,7 @@ public class LoadMetaDataListener implements ServletContextListener {
 
     /**
      * Recursive method used to find all classes in a given directory and
-     * subdirs.
+     * subdirectories.
      *
      * @param directory The base directory
      * @param packageName The package name for classes found inside the base
@@ -95,16 +114,26 @@ public class LoadMetaDataListener implements ServletContextListener {
         return classes;
     }
 
-    private final void processServiceClass(Class clazz) {
+    /**
+     * Scans the class for <code>Export</code> annotation.
+     * @param clazz given class.
+     * @param table table used to store information into.
+     */
+    private final void processServiceClass(Class clazz, Table<HttpMetod, String, ServiceMetaData> table) {
         Method[] methods = clazz.getMethods();
         for (Method method : methods) {
             if (method.isAnnotationPresent(Export.class)) {
-                processMethod(method);
+                processMethod(method, table);
             }
         }
     }
 
-    private final void processMethod(Method method) {
+    /**
+     * Processes the given method. Extracts all the information and store it in the table.
+     * @param method
+     * @param table 
+     */
+    private final void processMethod(Method method, Table<HttpMetod, String, ServiceMetaData> table) {
         logger.log(Level.INFO, "method name: {0} is annotated: {1}",
                 new Object[]{method, method.isAnnotationPresent(Export.class)});
         ServiceMetaData metaData = new ServiceMetaData();
@@ -112,8 +141,10 @@ public class LoadMetaDataListener implements ServletContextListener {
         
         logger.log(Level.INFO, "name():{0}", meta.name());
         metaData.setAuthenticate(meta.authenticate());
-        metaData.setClassName(method.getClass().getName());
-        metaData.setMethod(meta.method());
-        metaData.setName(meta.name());       
+        metaData.setHttpMethod(meta.method());
+        metaData.setName(meta.name());
+        metaData.setMethod(method);
+        
+        table.put(meta.method(), meta.name(), metaData);
     }
 }

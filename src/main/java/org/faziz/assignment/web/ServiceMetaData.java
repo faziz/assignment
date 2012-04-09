@@ -1,5 +1,6 @@
 package org.faziz.assignment.web;
 
+import java.lang.reflect.Method;
 import org.faziz.assignment.service.meta.HttpMetod;
 
 /**
@@ -7,37 +8,24 @@ import org.faziz.assignment.service.meta.HttpMetod;
  * @author faisal
  */
 public class ServiceMetaData {
-    private String className = null;
-    private HttpMetod method = null;
+    
+    private HttpMetod httpMethod = null;
     private String name = null;
+    private Method method = null;
     private boolean authenticate;
-
-    /**
-     * @return the className
-     */
-    public String getClassName() {
-        return className;
-    }
-
-    /**
-     * @param className the className to set
-     */
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
+    
     /**
      * @return the method
      */
-    public HttpMetod getMethod() {
-        return method;
+    public HttpMetod getHttpMethod() {
+        return httpMethod;
     }
 
     /**
      * @param method the method to set
      */
-    public void setMethod(HttpMetod method) {
-        this.method = method;
+    public void setHttpMethod(HttpMetod method) {
+        this.httpMethod = method;
     }
 
     /**
@@ -66,5 +54,19 @@ public class ServiceMetaData {
      */
     public void setAuthenticate(boolean authenticate) {
         this.authenticate = authenticate;
+    }
+
+    /**
+     * @return the method
+     */
+    public Method getMethod() {
+        return method;
+    }
+
+    /**
+     * @param method the method to set
+     */
+    public void setMethod(Method method) {
+        this.method = method;
     }
 }
