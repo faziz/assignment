@@ -3,11 +3,13 @@ package org.faziz.assignment.web;
 import com.google.common.collect.Table;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
@@ -20,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -66,12 +69,13 @@ public class RestifiedServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, ex.getMessage());
         }catch(Exception ex){
             logger.log(Level.SEVERE, "Exception occurred: ", ex);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
         }finally {            
             out.close();
         }
     }
     
-    private void writeContent(Object data, Writer writer, String contentType) throws IOException, JAXBException{
+    private final void writeContent(Object data, Writer writer, String contentType) throws IOException, JAXBException{
         if( "application/json".equalsIgnoreCase(contentType)){
             writeJSON(data, writer);
         }else{
@@ -79,7 +83,7 @@ public class RestifiedServlet extends HttpServlet {
         }
     }
     
-    private Object processRESTRequest(HttpServletRequest request, HttpServletResponse response, HttpMetod httpMetod) 
+    private final Object processRESTRequest(HttpServletRequest request, HttpServletResponse response, HttpMetod httpMetod) 
             throws NoSuchMethodException, 
             InstantiationException, 
             IllegalAccessException, 
@@ -97,8 +101,8 @@ public class RestifiedServlet extends HttpServlet {
         Object result = null;
         ServiceMetaData metaData = null;
         switch(httpMetod){
-            case GET:
-                metaData = table.get(HttpMetod.GET, actionRequest);
+            case GET:                
+                metaData = getServiceMetaData(table, httpMetod, actionRequest);
                 break;
         }
         
@@ -114,6 +118,8 @@ public class RestifiedServlet extends HttpServlet {
         return result;
     }
     
+    
+    
     /**
      * Tries to load content type from the request. If not found, then sets it to 
      * application/json.
@@ -122,7 +128,7 @@ public class RestifiedServlet extends HttpServlet {
      * @param request
      * @return 
      */
-    private String getContentType(HttpServletRequest request){
+    private final String getContentType(HttpServletRequest request){
         String contentType = request.getHeader("Content-Type");
         if( StringUtils.isEmpty(contentType)){
             contentType = "application/json";
@@ -184,7 +190,7 @@ public class RestifiedServlet extends HttpServlet {
         return "Servlet serving REST requests.";
     }// </editor-fold>
 
-    private Object invokeService(HttpServletRequest request, ServiceMetaData metaData, 
+    private final Object invokeService(HttpServletRequest request, ServiceMetaData metaData, 
             EntityManagerFactory entityManagerFactory) throws NoSuchMethodException, 
             InstantiationException, 
             IllegalAccessException, 
@@ -211,14 +217,17 @@ public class RestifiedServlet extends HttpServlet {
      * @param writer
      * @throws IOException 
      */
-    private void writeJSON(Object data, Writer writer) throws IOException {
+    private final void writeJSON(final Object data, final Writer writer) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
         // make deserializer use JAXB annotations (only)
         mapper.getDeserializationConfig().setAnnotationIntrospector(introspector);
         // make serializer use JAXB annotations (only)
         mapper.getSerializationConfig().setAnnotationIntrospector(introspector);
-        mapper.writeValue( writer, data);
+        
+        StringWriter stringWriter = new StringWriter();
+        mapper.writeValue( stringWriter, data);
+        IOUtils.write( stringWriter.toString(), writer);
     }
 
     /**
@@ -227,9 +236,28 @@ public class RestifiedServlet extends HttpServlet {
      * @param writer
      * @throws JAXBException 
      */
-    private void writeXML(Object data, Writer writer) throws JAXBException {
+    private final void writeXML(final Object data, final Writer writer) throws JAXBException, IOException {
         JAXBContext context = JAXBContext.newInstance(User.class);
         Marshaller marshaller = context.createMarshaller();
-        marshaller.marshal(data, writer);
+        
+        StringWriter stringWriter = new StringWriter();
+        marshaller.marshal(data, stringWriter);
+        IOUtils.write( stringWriter.toString(), writer);
+    }
+
+    private final ServiceMetaData getServiceMetaData(final Table<HttpMetod, String, ServiceMetaData> table, 
+            final HttpMetod httpMetod, final String actionRequest) {
+        ServiceMetaData metaData  = table.get(HttpMetod.GET, actionRequest);
+        
+        //Lets make another pass.
+        if(null == metaData){
+            Set<String> keySet = table.row(httpMetod).keySet();
+            for (String key : keySet) {
+                logger.log( Level.INFO, "key: ", key);
+                
+            }
+        }
+        
+        return metaData;
     }
 }
