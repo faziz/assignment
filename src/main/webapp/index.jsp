@@ -11,12 +11,16 @@
         <script type="text/javascript">
             $(document).ready(function(){
                 $('#getuserbyname').click(function(){
-                    $.ajax('${pageContext.servletContext.contextPath}/api/users/', {
+                    var username = $('#username').val();
+                    
+                    $.ajax('${pageContext.servletContext.contextPath}/api/users/?banckle-username-token=123', {
                         contentType: 'application/json',
+                        data: '{\"username\":\"' + username + '\"}',
                         dataType: 'json',
                         error: function(jqXHR, textStatus, errorThrown){
                             alert('Error occurred: ' + errorThrown);
-                        }
+                        },
+                        method: 'GET'
                     });
                 });
             });            
@@ -32,7 +36,7 @@
                 </tr>
                 <tr>
                     <td colspan="2" >
-                        <input type="submit" id="getuserbyname" value="Get user" />
+                        <input type="button" id="getuserbyname" value="Get user" />
                     </td>
                 </tr>
             </table>

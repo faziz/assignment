@@ -3,9 +3,9 @@ package org.faziz.assignment.service;
 import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaQuery;
 import org.faziz.assignment.domain.Address;
 import org.faziz.assignment.domain.User;
+import org.faziz.assignment.service.exception.UserNotFoundException;
 import org.faziz.assignment.service.meta.Export;
 import org.faziz.assignment.service.meta.HttpMetod;
 
@@ -34,10 +34,18 @@ public class UserServiceImpl extends AbstractService implements UserService{
     
     @Override
     @Export(method = HttpMetod.GET, name = "/users/", authenticate = false)
-    public User getUser(Map<String, String[]> param, User user) {
+    public User getUser(final Map<String, String[]> param, final User user) {
         Query findByUsername = entityManager.createNamedQuery("User.findByUsername");
+        findByUsername.setParameter("username", user.getUsername());
         
-        return (User) findByUsername.getSingleResult();
+        User result = null;
+        try{
+            result = (User) findByUsername.getSingleResult();
+        }catch(Exception exception){
+            throw new UserNotFoundException(user.getUsername(), exception);
+        }
+        
+        return result;
     }
 
     @Override

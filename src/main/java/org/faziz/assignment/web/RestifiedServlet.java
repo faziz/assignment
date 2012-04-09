@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
@@ -19,6 +20,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -40,6 +43,8 @@ public class RestifiedServlet extends HttpServlet {
     @PersistenceUnit(name="assignment")
     private EntityManagerFactory entityManagerFactory;
     
+    @Resource
+    private UserTransaction tx;
     
     /**
      * Processes requests for both HTTP
@@ -56,25 +61,38 @@ public class RestifiedServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
-            logger.log(Level.INFO, "entityManagerFactory: ", entityManagerFactory);
+            logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
             
             String contentType = getContentType(request);
+            tx.begin();
             Object result = processRESTRequest(request, response, 
                     HttpMetod.valueOf(request.getMethod()));
+            tx.commit();
             
             writeContent(result, out, contentType);
         } catch(NoSuchRESTRequestMappingFoundException ex){
             logger.log(Level.SEVERE, "Resource not found: ", ex);
+            rollback();
             response.sendError(HttpServletResponse.SC_NOT_FOUND, ex.getMessage());
         }catch(Exception ex){
             logger.log(Level.SEVERE, "Exception occurred: ", ex);
+            rollback();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
         }finally {            
             out.close();
         }
     }
     
-    private final void writeContent(final Object data, final Writer writer, final String contentType) throws IOException, JAXBException{
+    private final void rollback(){
+        try {
+            tx.rollback();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Exception occurred: ", ex);
+        }
+    }
+    
+    private final void writeContent(final Object data, final Writer writer, final String contentType) 
+            throws IOException, JAXBException{
         if( "application/json".equalsIgnoreCase(contentType)){
             writeJSON(data, writer);
         }else{
@@ -94,23 +112,21 @@ public class RestifiedServlet extends HttpServlet {
         
         String requestURI = request.getRequestURI();
         String actionRequest = requestURI.substring(requestURI.indexOf("api") + 3);        
-        logger.log(Level.INFO, "actionRequest: ", actionRequest);        
+        logger.log(Level.INFO, "actionRequest: {0}", actionRequest);        
         Table<HttpMetod, String, ServiceMetaData> table = (Table<HttpMetod, String, ServiceMetaData>) 
                 getServletContext().getAttribute(ApplicationConstants.REQUEST_MAP);
-        
-        logger.log(Level.INFO, "actionRequest: ", actionRequest);
         
         Object result = null;
         ServiceMetaData metaData = null;
         switch(httpMetod){
-            case GET:                
+            case GET:
                 metaData = getServiceMetaData(table, httpMetod, actionRequest);
                 break;
         }
         
         //Request URI was not found.
         if(null != metaData) {
-            logger.log(Level.INFO, "metaData: ", metaData);
+            logger.log(Level.INFO, "metaData: {0}", metaData);
                 result = invokeService(request, metaData, entityManagerFactory);
         }else{
             throw new NoSuchRESTRequestMappingFoundException(
@@ -209,12 +225,12 @@ public class RestifiedServlet extends HttpServlet {
         
         Map<String, String[]> parameters = request.getParameterMap();
         Object[] methodInputParameters = null;
-        String postedData = request.getParameter(ApplicationConstants.POSTED_DATA);
+        String postedData = getData(request);
+        Class<?>[] parameterTypes = method.getParameterTypes();
         
-        
-        if( StringUtils.isNotEmpty(postedData)){
+        if( parameterTypes.length > 1){
             methodInputParameters = new Object[]{parameters, 
-                readData(postedData, method.getParameterTypes()[1])};
+                readData(postedData, parameterTypes[1])};
         }else{
             methodInputParameters = new Object[]{parameters};
         }
@@ -225,6 +241,19 @@ public class RestifiedServlet extends HttpServlet {
         entityManager.close();
         
         return result;
+    }
+    
+    private final String getData(HttpServletRequest request){
+        String data = null;
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        Set<String> keys = parameterMap.keySet();
+        for (String key : keys) {
+            if(key.startsWith("{")) {
+               data = key;
+            }
+        }        
+        
+        return data;        
     }
     
     /**
