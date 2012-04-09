@@ -69,4 +69,12 @@ public class ServiceMetaData {
     public void setMethod(Method method) {
         this.method = method;
     }
+
+    @Override
+    public String toString() {
+        return "ServiceMetaData{" + "httpMethod=" + httpMethod + ", name=" + name + 
+                ", method=" + method + ", authenticate=" + authenticate + '}';
+    }
+    
+    
 }

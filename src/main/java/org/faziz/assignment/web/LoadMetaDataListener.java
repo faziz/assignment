@@ -1,6 +1,5 @@
 package org.faziz.assignment.web;
 
-import com.google.common.collect.ArrayTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import java.io.File;
@@ -32,6 +31,8 @@ public class LoadMetaDataListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         Table<HttpMetod, String, ServiceMetaData> table = processServiceClasses(sce);
+        logger.log(Level.INFO, "Request map: ", table.size());
+        
         sce.getServletContext().setAttribute(ApplicationConstants.REQUEST_MAP, table);
     }
 
@@ -60,7 +61,7 @@ public class LoadMetaDataListener implements ServletContextListener {
     /**
      * Returns Array of classes from the given package name.
      * @param packageName package name used to load the classes from.
-     * @param sce servlet context used for loading classes from.
+     * @param sce servlet context event used for loading classes from.
      * @return array of classes.
      * @throws ClassNotFoundException
      * @throws IOException 
