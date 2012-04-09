@@ -3,7 +3,6 @@ package org.faziz.assignment.service;
 import java.util.Map;
 import org.faziz.assignment.domain.Address;
 import org.faziz.assignment.domain.User;
-import org.faziz.assignment.domain.UserList;
 
 /**
  *
@@ -15,11 +14,9 @@ public interface UserService {
 
     public User updateUser(Map<String, String[]> param, User user);
 
-    public User getUser(Map<String, String[]> param, int id);
-    
-    public UserList getAllUser(Map<String, String[]> param);
+    public User getUser(Map<String, String[]> param, User user);
 
-    public void deleteUser(Map<String, String[]> param, int id);
+    public void deleteUser(Map<String, String[]> param, User user);
     
     public Address  addAddress(Map<String, String[]> param, int userId, Address address);
     

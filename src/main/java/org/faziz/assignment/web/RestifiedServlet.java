@@ -89,7 +89,8 @@ public class RestifiedServlet extends HttpServlet {
             InstantiationException, 
             IllegalAccessException, 
             IllegalArgumentException, 
-            InvocationTargetException{
+            InvocationTargetException, 
+            IOException{
         
         String requestURI = request.getRequestURI();
         String actionRequest = requestURI.substring(requestURI.indexOf("api") + 3);        
@@ -117,9 +118,7 @@ public class RestifiedServlet extends HttpServlet {
         }
         
         return result;
-    }
-    
-    
+    }    
     
     /**
      * Tries to load content type from the request. If not found, then sets it to 
@@ -196,7 +195,8 @@ public class RestifiedServlet extends HttpServlet {
             InstantiationException, 
             IllegalAccessException, 
             IllegalArgumentException, 
-            InvocationTargetException {
+            InvocationTargetException, 
+            IOException {
         logger.info("Invoking service...");
         
         Method method = metaData.getMethod();
@@ -208,14 +208,44 @@ public class RestifiedServlet extends HttpServlet {
             entityManager);
         
         Map<String, String[]> parameters = request.getParameterMap();
-        Object result = method.invoke(newInstance, new Object[]{parameters});
+        Object[] methodInputParameters = null;
+        String postedData = request.getParameter(ApplicationConstants.POSTED_DATA);
         
+        
+        if( StringUtils.isNotEmpty(postedData)){
+            methodInputParameters = new Object[]{parameters, 
+                readData(postedData, method.getParameterTypes()[1])};
+        }else{
+            methodInputParameters = new Object[]{parameters};
+        }
+        
+        Object result = method.invoke(newInstance, methodInputParameters);
         
         entityManager.flush();
         entityManager.close();
         
         return result;
     }
+    
+    /**
+     * Reads JSON data string to create a new instance.
+     * @param data
+     * @param clazz
+     * @return
+     * @throws IOException 
+     */
+    private final Object readData(final String data, Class clazz) throws IOException{
+        ObjectMapper mapper = new ObjectMapper();
+        AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
+        // make deserializer use JAXB annotations (only)
+        mapper.getDeserializationConfig().setAnnotationIntrospector(introspector);
+        // make serializer use JAXB annotations (only)
+        mapper.getSerializationConfig().setAnnotationIntrospector(introspector);
+        
+        return mapper.readValue(data, clazz);
+    }
+    
+    
 
     /**
      * Writes JSON data to the servlet stream.

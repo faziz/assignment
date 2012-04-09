@@ -1,0 +1,121 @@
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+    border: 0 none;
+    font: inherit;
+    margin: 0;
+    padding: 0;
+    vertical-align: baseline;
+}
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none outside none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after, q:before, q:after {
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+body {
+    background: none repeat scroll 0 0 #333333;
+    color: #EEEEEE;
+    font-family: Arial,Helvetica,sans-serif;
+    font-size: 12px;
+    margin: 0;
+    padding: 20px;
+    width: 960px;
+}
+ul li {
+    background: url("images/accept.png") no-repeat scroll left center transparent;
+    list-style: none outside none;
+    margin-left: 10px;
+    padding: 3px 3px 3px 20px;
+}
+ul, ol {
+    margin-bottom: 10px;
+}
+ol li {
+    list-style: none outside none;
+    padding: 10px 10px 5px;
+}
+ol li div.question {
+    color: #CCCCCC;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+a {
+    color: #0066FF;
+    text-decoration: none;
+}
+h1 {
+    color: #0099FF;
+    font-size: 26px;
+    font-weight: normal;
+    margin: 0;
+}
+h2 {
+    font-size: 15px;
+    font-weight: bold;
+    margin: 15px 0 5px;
+}
+.code {
+    background: none repeat scroll 0 0 #555555;
+    color: #EEEEEE;
+    display: none;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+.title {
+    background: none repeat scroll 0 0 #0099FF;
+    color: #FFFFFF;
+    padding: 10px;
+}
+.bborder {
+    background: none repeat scroll 0 0 #EEEEEE;
+    border: 0 solid #CCCCCC;
+    padding: 3px;
+}
+.update {
+    border: 1px solid #777777;
+    margin-top: 20px;
+    overflow: hidden;
+}
+.update h3 {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 5px 0 5px 10px;
+}
+.update.fh {
+    height: auto;
+}
+.update p {
+    margin: 10px;
+}
+.update h2 {
+    border-bottom: 2px solid #0066FF;
+    border-left: 0 solid #0066FF;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin: 0 0 3px;
+    padding: 5px;
+    position: relative;
+    text-transform: uppercase;
+}
+.flexigrid div.fbutton .add {
+    background: url("images/add.png") no-repeat scroll left center transparent;
+}
+.flexigrid div.fbutton .delete {
+    background: url("images/close.png") no-repeat scroll left center transparent;
+}

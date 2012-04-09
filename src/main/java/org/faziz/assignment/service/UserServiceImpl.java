@@ -1,11 +1,11 @@
 package org.faziz.assignment.service;
 
-import java.util.List;
 import java.util.Map;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaQuery;
 import org.faziz.assignment.domain.Address;
 import org.faziz.assignment.domain.User;
-import org.faziz.assignment.domain.UserList;
 import org.faziz.assignment.service.meta.Export;
 import org.faziz.assignment.service.meta.HttpMetod;
 
@@ -27,38 +27,27 @@ public class UserServiceImpl extends AbstractService implements UserService{
     }
 
     @Override
-    @Export(method = HttpMetod.PUT, name = "/users/*/address", authenticate = true)
+    @Export(method = HttpMetod.PUT, name = "/users/", authenticate = true)
     public User updateUser(Map<String, String[]> param, User user) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-
-    @Override
-    @Export(method = HttpMetod.GET, name = "/users", authenticate = false)
-    public UserList getAllUser(Map<String, String[]> param) {
-        javax.persistence.criteria.CriteriaQuery cq = entityManager.getCriteriaBuilder().
-                createQuery(User.class);
-        List<User> resultList = entityManager.createQuery(cq).getResultList();
-        
-        UserList list = new UserList();
-        list.setUsers(resultList);
-        
-        return list;
-    }
     
     @Override
-    @Export(method = HttpMetod.GET, name = "/users/id/", authenticate = false)
-    public User getUser(Map<String, String[]> param, int id) {
-        return entityManager.find(User.class, id);
+    @Export(method = HttpMetod.GET, name = "/users/", authenticate = false)
+    public User getUser(Map<String, String[]> param, User user) {
+        Query findByUsername = entityManager.createNamedQuery("User.findByUsername");
+        
+        return (User) findByUsername.getSingleResult();
     }
 
     @Override
-    @Export(method= HttpMetod.DELETE, name="/users/*", authenticate=true)
-    public void deleteUser(Map<String, String[]> param, int id) {
+    @Export(method= HttpMetod.DELETE, name="/users/", authenticate=true)
+    public void deleteUser(Map<String, String[]> param, User user) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    @Export(method= HttpMetod.POST, name="/users/*/address", authenticate=true)
+    @Export(method= HttpMetod.POST, name="/users/*/address/*", authenticate=true)
     public Address addAddress(Map<String, String[]> param, int userId, Address address) {
         throw new UnsupportedOperationException("Not supported yet.");
     }

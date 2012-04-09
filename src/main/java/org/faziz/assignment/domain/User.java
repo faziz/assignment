@@ -17,7 +17,8 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 @Entity
 @Table(name = "user")
 @XmlRootElement
-//@NamedQueries({
+@NamedQueries({
+    @NamedQuery(name = "User.findByUsername", query = "SELECT u FROM User u WHERE u.username = :username")
 //    @NamedQuery(name = "User.findAll", query = "SELECT u FROM User u"),
 //    @NamedQuery(name = "User.findById", query = "SELECT u FROM User u WHERE u.id = :id"),
 //    @NamedQuery(name = "User.findByUsername", query = "SELECT u FROM User u WHERE u.username = :username"),
@@ -25,7 +26,8 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 //    @NamedQuery(name = "User.findByFirstname", query = "SELECT u FROM User u WHERE u.firstname = :firstname"),
 //    @NamedQuery(name = "User.findByLastname", query = "SELECT u FROM User u WHERE u.lastname = :lastname"),
 //    @NamedQuery(name = "User.findByMiddlename", query = "SELECT u FROM User u WHERE u.middlename = :middlename"),
-//    @NamedQuery(name = "User.findByApitoekn", query = "SELECT u FROM User u WHERE u.apitoekn = :apitoekn")})
+//    @NamedQuery(name = "User.findByApitoekn", query = "SELECT u FROM User u WHERE u.apitoekn = :apitoekn")
+    })
 public class User implements Serializable {
     private static final long serialVersionUID = 12314234L;
     @Id

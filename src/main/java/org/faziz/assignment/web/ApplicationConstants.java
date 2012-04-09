@@ -8,4 +8,7 @@ package org.faziz.assignment.web;
 public class ApplicationConstants {
     /** Request map used to route method requests to the handlers. */
     public static final String REQUEST_MAP = "REQUEST_MAP";
+    
+    /** Data browser load to the server. */
+    public static final String POSTED_DATA = "POSTED_DATA";
 }

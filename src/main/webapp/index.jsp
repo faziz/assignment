@@ -5,9 +5,37 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Assignment</title>
+        <title>Assignment</title>        
+
+        <script type="text/javascript" src="res/jquery-1.7.1.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                $('#getuserbyname').click(function(){
+                    $.ajax('${pageContext.servletContext.contextPath}/api/users/', {
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        error: function(jqXHR, textStatus, errorThrown){
+                            alert('Error occurred: ' + errorThrown);
+                        }
+                    });
+                });
+            });            
+        </script>
     </head>
     <body>
         <h1>Assignment!</h1>
+        <form id="form1" method="POST">
+            <table border="0">
+                <tr>
+                    <td>Username</td>
+                    <td><input type="text" id="username" name="username" value="" /></td>
+                </tr>
+                <tr>
+                    <td colspan="2" >
+                        <input type="submit" id="getuserbyname" value="Get user" />
+                    </td>
+                </tr>
+            </table>
+        </form>
     </body>
 </html>
