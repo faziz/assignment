@@ -141,7 +141,7 @@ public class RestifiedServlet extends HttpServlet {
             }
             
             logger.log(Level.INFO, "metaData: {0}", service);
-            result = invokeService(request, service, entityManagerFactory);
+            result = invokeService(request, service);
         }else{
             throw new NoSuchRESTRequestMappingFoundException(
                 "REST request mapping not found." + actionRequest);
@@ -242,8 +242,21 @@ public class RestifiedServlet extends HttpServlet {
         return "Servlet serving REST requests.";
     }// </editor-fold>
 
-    private final Object invokeService(final HttpServletRequest request, final ServiceMetaData metaData, 
-            final EntityManagerFactory entityManagerFactory) throws NoSuchMethodException, 
+    /**
+     * Invokes REST service for the given HTTP request.
+     * 
+     * @param request
+     * @param metaData
+     * @return Returns data if supported by the REST service else null.
+     * 
+     * @throws NoSuchMethodException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     * @throws InvocationTargetException
+     * @throws IOException 
+     */
+    private final Object invokeService(final HttpServletRequest request, final ServiceMetaData metaData) throws NoSuchMethodException, 
             InstantiationException, 
             IllegalAccessException, 
             IllegalArgumentException, 
@@ -256,14 +269,13 @@ public class RestifiedServlet extends HttpServlet {
              EntityManager.class);
         
         EntityManager entityManager = entityManagerFactory.createEntityManager();
-        Object newInstance = constructor.newInstance(
-            entityManager);
+        Object newInstance = constructor.newInstance(entityManager);
         
-        Map<String, String[]> parameters = request.getParameterMap();
-        Object[] methodInputParameters = null;
-        String postedData = getData(request);
+        Map<String, String[]> parameters = request.getParameterMap();        
+        String postedData = getDataFromRequest(request);
         Class<?>[] parameterTypes = method.getParameterTypes();
         
+        Object[] methodInputParameters = null;
         if( parameterTypes.length > 1){
             methodInputParameters = new Object[]{parameters, 
                 readData(postedData, parameterTypes[1])};
@@ -281,10 +293,12 @@ public class RestifiedServlet extends HttpServlet {
     
     /**
      * Extracts posted AJAXED data from the request.
+     * TODO: HACK.
+     * 
      * @param request
      * @return 
      */
-    private final String getData(HttpServletRequest request){
+    private final String getDataFromRequest(HttpServletRequest request){
         String data = null;
         
         //For GET request, AJAX data is posted with parameters string.
@@ -293,6 +307,7 @@ public class RestifiedServlet extends HttpServlet {
             Map<String, String[]> parameterMap = request.getParameterMap();
             Set<String> keys = parameterMap.keySet();
             for (String key : keys) {
+                //TODO: HACK.
                 if(key.startsWith("{")) {
                    data = key;
                 }
