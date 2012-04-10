@@ -22,14 +22,19 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method = HttpMetod.POST, name = "/users/", authenticate = true)
     public User addUser(Map<String, String[]> param, User user) {
+        entityManager.persist(user.getAddress());
         entityManager.persist(user);
+        
         return user;
     }
 
     @Override
     @Export(method = HttpMetod.PUT, name = "/users/", authenticate = true)
     public User updateUser(Map<String, String[]> param, User user) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        entityManager.merge(user.getAddress());
+        entityManager.merge(user);
+        
+        return user;
     }
     
     @Override
@@ -51,7 +56,8 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method= HttpMetod.DELETE, name="/users/", authenticate=true)
     public void deleteUser(Map<String, String[]> param, User user) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        entityManager.remove(user.getAddress());
+        entityManager.remove(user);
     }
 
     @Override

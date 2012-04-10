@@ -40,7 +40,8 @@
                     var city = $('#cc').val();
                     var stat = $('#cs').val();
 
-                    var user = getUser(un, fn, ln, mn, pwd, tok, add1, add2, city, stat);
+                    var user = getUser(un, fn, ln, mn, pwd, tok, 
+                    add1, add2, city, stat);
                     
                     $.ajax('${pageContext.servletContext.contextPath}/api/users/?banckle-username-token=admin&banckle-password-token=adminpwd&banckle-api-token=token', {
                         contentType: 'application/json',

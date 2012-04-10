@@ -28,8 +28,6 @@ public class Address implements Serializable {
     private static final long serialVersionUID = -6742434L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Basic(optional = false)
-    @NotNull
     @Column(name = "ID")
     private Integer id;
     @Basic(optional = false)

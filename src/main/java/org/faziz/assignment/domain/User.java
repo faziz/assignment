@@ -26,27 +26,25 @@ public class User implements Serializable {
     private static final long serialVersionUID = 12314234L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Basic(optional = false)
-    @NotNull
     @Column(name = "ID")
     private Integer id;
     @Basic(optional = false)
-    @NotNull
+    @NotNull(message="Username can not be empty.")
     @Size(min = 1, max = 20)
     @Column(name = "USERNAME")
     private String username;
     @Basic(optional = false)
-    @NotNull
+    @NotNull(message="Password can not be empty.")
     @Size(min = 1, max = 20)
     @Column(name = "PASSWORD")
     private String password;
     @Basic(optional = false)
-    @NotNull
+    @NotNull(message="First name can not be empty.")
     @Size(min = 1, max = 20)
     @Column(name = "FIRSTNAME")
     private String firstName;
     @Basic(optional = false)
-    @NotNull
+    @NotNull(message="Last name can not be empty.")
     @Size(min = 1, max = 20)
     @Column(name = "LASTNAME")
     private String lastName;
@@ -54,7 +52,7 @@ public class User implements Serializable {
     @Column(name = "MIDDLENAME")
     private String middleName;
     @Basic(optional = false)
-    @NotNull
+    @NotNull(message="API token can not be empty.")
     @Size(min = 1, max = 20)
     @Column(name = "APITOKEN")
     private String apiToken;
