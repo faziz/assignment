@@ -72,8 +72,10 @@ public class RestifiedServlet extends HttpServlet {
             
             String contentType = getContentType(request);
             tx.begin();
+            
             Object result = processRESTRequest(request, response, 
                     HttpMetod.valueOf(request.getMethod()));
+            
             tx.commit();
             
             writeContent(result, out, contentType);
@@ -120,6 +122,7 @@ public class RestifiedServlet extends HttpServlet {
         String requestURI = request.getRequestURI();
         String actionRequest = requestURI.substring(requestURI.indexOf("api") + 3);        
         logger.log(Level.INFO, "actionRequest: {0}", actionRequest);
+        
         Table<HttpMetod, String, ServiceMetaData> table = (Table<HttpMetod, String, ServiceMetaData>) 
                 getServletContext().getAttribute(ApplicationConstants.REQUEST_MAP);
         
@@ -276,12 +279,17 @@ public class RestifiedServlet extends HttpServlet {
         return result;
     }
     
+    /**
+     * Extracts posted AJAXED data from the request.
+     * @param request
+     * @return 
+     */
     private final String getData(HttpServletRequest request){
         String data = null;
         
         //For GET request, AJAX data is posted with parameters string.
         //For the rest of the methods AJAX data is posted with request body.
-        if( request.getMethod().equals( HttpMetod.GET) ){
+        if( request.getMethod().equals( HttpMetod.GET.toString()) ){
             Map<String, String[]> parameterMap = request.getParameterMap();
             Set<String> keys = parameterMap.keySet();
             for (String key : keys) {

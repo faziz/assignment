@@ -23,9 +23,19 @@
                         success: function(data, textStatus, jqXHR){
                             $('#un').append(data.firstname);
                             $('#ln').append(data.lastname);
+                            $('#deleteuser').css('visibility', 'visible');
+                            $('#updateuser').css('visibility', 'visible');
                         },
                         method: 'GET'
                     });
+                });
+                
+                $('#updateuser').click(function(){
+                    alert('Not implemented yet.');
+                });
+                
+                $('#deleteuser').click(function(){
+                    alert('Not implemented yet.');
                 });
                 
                 $('#createuser').click(function(){
@@ -80,7 +90,7 @@
 
         <div>
             <div style="float: left; border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; border-left: 1px solid black; width: 49%">
-                <div style="font-weight: bold;">&nbsp;Get User Test</div>
+                <div style="font-weight: bold;">&nbsp;Get\Update\Delete User Test</div>
                 <form id="form1">
                     <table border="0">
                         <tr>
@@ -90,6 +100,8 @@
                         <tr>
                             <td colspan="2" >
                                 <input type="button" id="getuserbyname" value="Get user" />
+                                <input type="button" id="updateuser" value="Update user" style="visibility: hidden" />
+                                <input type="button" id="deleteuser" value="Delete user" style="visibility: hidden" />
                             </td>
                         </tr>
                     </table>
