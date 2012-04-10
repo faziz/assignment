@@ -24,9 +24,10 @@ import org.apache.commons.lang.builder.ToStringBuilder;
     @NamedQuery(name = "Address.findByCity", query = "SELECT a FROM Address a WHERE a.city = :city"),
     @NamedQuery(name = "Address.findByState", query = "SELECT a FROM Address a WHERE a.state = :state")})
 public class Address implements Serializable {
+    
     private static final long serialVersionUID = -6742434L;
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
     @NotNull
     @Column(name = "ID")
@@ -134,5 +135,4 @@ public class Address implements Serializable {
                 append("state", state).
                 toString();
     }
-    
 }

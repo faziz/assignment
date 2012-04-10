@@ -1,5 +1,6 @@
 package org.faziz.assignment.web;
 
+import org.faziz.assignment.utils.ApplicationConstants;
 import com.google.common.collect.Table;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -13,6 +14,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
+import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
@@ -20,7 +22,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -30,7 +31,10 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.xc.JaxbAnnotationIntrospector;
+import org.faziz.assignment.service.SecurityService;
+import org.faziz.assignment.service.exception.UnauthorizedAccessException;
 import org.faziz.assignment.service.meta.HttpMetod;
+import org.faziz.assignment.utils.ApplicationUtils;
 
 /**
  *
@@ -45,6 +49,9 @@ public class RestifiedServlet extends HttpServlet {
     
     @Resource
     private UserTransaction tx;
+    
+    @EJB
+    private SecurityService securityService;
     
     /**
      * Processes requests for both HTTP
@@ -112,29 +119,55 @@ public class RestifiedServlet extends HttpServlet {
         
         String requestURI = request.getRequestURI();
         String actionRequest = requestURI.substring(requestURI.indexOf("api") + 3);        
-        logger.log(Level.INFO, "actionRequest: {0}", actionRequest);        
+        logger.log(Level.INFO, "actionRequest: {0}", actionRequest);
         Table<HttpMetod, String, ServiceMetaData> table = (Table<HttpMetod, String, ServiceMetaData>) 
                 getServletContext().getAttribute(ApplicationConstants.REQUEST_MAP);
         
         Object result = null;
-        ServiceMetaData metaData = null;
-        switch(httpMetod){
-            case GET:
-                metaData = getServiceMetaData(table, httpMetod, actionRequest);
-                break;
+        ServiceMetaData service = null;
+        
+        if( httpMetod != null ){
+            service = getServiceMetaData(table, httpMetod, actionRequest);
+        }else{
+            throw new IllegalArgumentException("Please privide http method type. " + HttpMetod.values());
         }
         
-        //Request URI was not found.
-        if(null != metaData) {
-            logger.log(Level.INFO, "metaData: {0}", metaData);
-                result = invokeService(request, metaData, entityManagerFactory);
+        if(null != service) {
+            if(service.requireAuthentication()){
+                assessAuthorization(request);
+            }
+            
+            logger.log(Level.INFO, "metaData: {0}", service);
+            result = invokeService(request, service, entityManagerFactory);
         }else{
             throw new NoSuchRESTRequestMappingFoundException(
                 "REST request mapping not found." + actionRequest);
         }
         
         return result;
-    }    
+    }
+    
+    /**
+     * Provides authorization assistance.
+     * @param request 
+     * @throws UnauthorizedAccessException if username, password and API token 
+     * parameters are not found in the request or if the parameters do not match 
+     * with the system.
+     */
+    private final void assessAuthorization(final HttpServletRequest request){
+        String userName = request.getParameter(ApplicationConstants.REQUEST_USERNAME_PARAM_NAME);
+        String password = request.getParameter(ApplicationConstants.REQUEST_PASSWORD_PARAM_NAME);
+        String token = request.getParameter(ApplicationConstants.REQUEST_APITOKEN_PARAM_NAME);
+
+        if( StringUtils.isEmpty(userName) || StringUtils.isEmpty(password) 
+                || StringUtils.isEmpty(token)){
+            throw new UnauthorizedAccessException();
+        }
+
+        if( securityService.isAuthentic(userName, password, token) == false){
+            throw new UnauthorizedAccessException(userName);
+        }
+    }
     
     /**
      * Tries to load content type from the request. If not found, then sets it to 
@@ -245,13 +278,20 @@ public class RestifiedServlet extends HttpServlet {
     
     private final String getData(HttpServletRequest request){
         String data = null;
-        Map<String, String[]> parameterMap = request.getParameterMap();
-        Set<String> keys = parameterMap.keySet();
-        for (String key : keys) {
-            if(key.startsWith("{")) {
-               data = key;
+        
+        //For GET request, AJAX data is posted with parameters string.
+        //For the rest of the methods AJAX data is posted with request body.
+        if( request.getMethod().equals( HttpMetod.GET) ){
+            Map<String, String[]> parameterMap = request.getParameterMap();
+            Set<String> keys = parameterMap.keySet();
+            for (String key : keys) {
+                if(key.startsWith("{")) {
+                   data = key;
+                }
             }
-        }        
+        }else{
+            data = ApplicationUtils.getPostData(request);
+        }
         
         return data;        
     }
@@ -315,7 +355,7 @@ public class RestifiedServlet extends HttpServlet {
 
     private final ServiceMetaData getServiceMetaData(final Table<HttpMetod, String, ServiceMetaData> table, 
             final HttpMetod httpMetod, final String actionRequest) {
-        ServiceMetaData metaData  = table.get(HttpMetod.GET, actionRequest);
+        ServiceMetaData metaData  = table.get( httpMetod, actionRequest);
         
         //Lets make another pass.
         if(null == metaData){

@@ -22,7 +22,7 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method = HttpMetod.POST, name = "/users/", authenticate = true)
     public User addUser(Map<String, String[]> param, User user) {
-        
+        entityManager.persist(user);
         return user;
     }
 
@@ -65,6 +65,4 @@ public class UserServiceImpl extends AbstractService implements UserService{
     public Address getAdress(Map<String, String[]> param, int addressId) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-
-    
 }

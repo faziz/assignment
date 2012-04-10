@@ -18,20 +18,14 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 @Table(name = "user")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "User.findByUsername", query = "SELECT u FROM User u WHERE u.username = :username")
-//    @NamedQuery(name = "User.findAll", query = "SELECT u FROM User u"),
-//    @NamedQuery(name = "User.findById", query = "SELECT u FROM User u WHERE u.id = :id"),
-//    @NamedQuery(name = "User.findByUsername", query = "SELECT u FROM User u WHERE u.username = :username"),
-//    @NamedQuery(name = "User.findByPassword", query = "SELECT u FROM User u WHERE u.password = :password"),
-//    @NamedQuery(name = "User.findByFirstname", query = "SELECT u FROM User u WHERE u.firstname = :firstname"),
-//    @NamedQuery(name = "User.findByLastname", query = "SELECT u FROM User u WHERE u.lastname = :lastname"),
-//    @NamedQuery(name = "User.findByMiddlename", query = "SELECT u FROM User u WHERE u.middlename = :middlename"),
-//    @NamedQuery(name = "User.findByApitoekn", query = "SELECT u FROM User u WHERE u.apitoekn = :apitoekn")
+    @NamedQuery(name = "User.findByUsername", query = "SELECT u FROM User u WHERE u.username = :username"),
+    @NamedQuery(name = "User.isAuthentic", query = "SELECT u FROM User u WHERE "
+        + "u.username = :username AND u.password = :password AND u.apiToken = :apiToken")
     })
 public class User implements Serializable {
     private static final long serialVersionUID = 12314234L;
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
     @NotNull
     @Column(name = "ID")
@@ -75,13 +69,13 @@ public class User implements Serializable {
         this.id = id;
     }
 
-    public User(Integer id, String username, String password, String firstname, String lastname, String apitoekn) {
+    public User(Integer id, String username, String password, String firstname, String lastname, String apiToken) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.firstName = firstname;
         this.lastName = lastname;
-        this.apiToken = apitoekn;
+        this.apiToken = apiToken;
     }
 
     public Integer getId() {

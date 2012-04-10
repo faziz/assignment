@@ -45,7 +45,7 @@ public class ServiceMetaData {
     /**
      * @return the authenticate
      */
-    public boolean isAuthenticate() {
+    public boolean requireAuthentication() {
         return authenticate;
     }
 
