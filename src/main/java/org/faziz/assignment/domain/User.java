@@ -132,12 +132,12 @@ public class User implements Serializable {
         this.middleName = middlename;
     }
 
-    public String getApitoekn() {
+    public String getApiToken() {
         return apiToken;
     }
 
-    public void setApitoekn(String apitoekn) {
-        this.apiToken = apitoekn;
+    public void setApiToken(String apiToken) {
+        this.apiToken = apiToken;
     }
 
     @XmlElement

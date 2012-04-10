@@ -1,9 +1,10 @@
-package org.faziz.assignment.domain;
+package org.faziz.assignment.service.dto;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.faziz.assignment.domain.User;
 
 @XmlRootElement
 public class UserList {
