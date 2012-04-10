@@ -137,7 +137,7 @@ public class RestifiedServlet extends HttpServlet {
         
         if(null != service) {
             if(service.requireAuthentication()){
-                assessAuthorization(request);
+                checkAuthorization(request);
             }
             
             logger.log(Level.INFO, "metaData: {0}", service);
@@ -157,7 +157,7 @@ public class RestifiedServlet extends HttpServlet {
      * parameters are not found in the request or if the parameters do not match 
      * with the system.
      */
-    private final void assessAuthorization(final HttpServletRequest request){
+    private final void checkAuthorization(final HttpServletRequest request){
         String userName = request.getParameter(ApplicationConstants.REQUEST_USERNAME_PARAM_NAME);
         String password = request.getParameter(ApplicationConstants.REQUEST_PASSWORD_PARAM_NAME);
         String token = request.getParameter(ApplicationConstants.REQUEST_APITOKEN_PARAM_NAME);
@@ -361,11 +361,21 @@ public class RestifiedServlet extends HttpServlet {
         IOUtils.write( stringWriter.toString(), writer);
     }
 
+    /**
+     * Tries to match to a given request URL with the mapping supported in the
+     * system.
+     * 
+     * TODO: Not very elegant. Will have to redesign it.
+     * @param table
+     * @param httpMetod
+     * @param actionRequest
+     * @return 
+     */
     private final ServiceMetaData getServiceMetaData(final Table<HttpMetod, String, ServiceMetaData> table, 
             final HttpMetod httpMetod, final String actionRequest) {
         ServiceMetaData metaData  = table.get( httpMetod, actionRequest);
         
-        //Lets make another pass.
+        //Lets make a pass.
         if(null == metaData){
             Set<String> keys = table.row(httpMetod).keySet();
             for (String key : keys) {
