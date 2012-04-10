@@ -55,8 +55,7 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method= HttpMetod.DELETE, name="/users/", authenticate=true)
     public void deleteUser(Map<String, String[]> param, User user) {
-        User u = getUser(param, user);
-        entityManager.remove(u);
+        entityManager.remove( getUser(param, user));
     }
 
     @Override
