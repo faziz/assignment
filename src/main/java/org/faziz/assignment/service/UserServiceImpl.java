@@ -31,7 +31,6 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method = HttpMetod.PUT, name = "/users/", authenticate = true)
     public User updateUser(Map<String, String[]> param, User user) {
-        entityManager.merge(user.getAddress());
         entityManager.merge(user);
         
         return user;
@@ -56,8 +55,8 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method= HttpMetod.DELETE, name="/users/", authenticate=true)
     public void deleteUser(Map<String, String[]> param, User user) {
-        entityManager.remove(user.getAddress());
-        entityManager.remove(user);
+        User u = getUser(param, user);
+        entityManager.remove(u);
     }
 
     @Override

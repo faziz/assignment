@@ -13,7 +13,7 @@
                 $('#getuserbyname').click(function(){
                     var username = $('#username').val();
                     
-                    $.ajax('${pageContext.servletContext.contextPath}/api/users/?banckle-username-token=123', {
+                    $.ajax('${pageContext.servletContext.contextPath}/api/users/', {
                         contentType: 'application/json',
                         data: '{\"username\":\"' + username + '\"}',
                         dataType: 'json',
@@ -21,12 +21,12 @@
                             alert('Error occurred: ' + errorThrown);
                         },
                         success: function(data, textStatus, jqXHR){
-                            $('#un').append(data.firstname);
-                            $('#ln').append(data.lastname);
+                            $('#un').append('<div>' + data.firstname + '</div>');
+                            $('#ln').append('<div>' + data.lastname  + '</div>');
                             $('#deleteuser').css('visibility', 'visible');
                             $('#updateuser').css('visibility', 'visible');
                         },
-                        method: 'GET'
+                        type: 'GET'
                     });
                 });
                 
@@ -35,7 +35,24 @@
                 });
                 
                 $('#deleteuser').click(function(){
-                    alert('Not implemented yet.');
+                    var username = $('#username').val();
+                    
+                    $.ajax('${pageContext.servletContext.contextPath}/api/users/?banckle-username-token=admin&banckle-password-token=adminpwd&banckle-api-token=token', {
+                        contentType: 'application/json',
+                        data: '{\"username\":\"' + username + '\"}',
+                        dataType: 'json',
+                        error: function(jqXHR, textStatus, errorThrown){
+                            alert('Error occurred: ' + errorThrown);
+                        },
+                        success: function(data, textStatus, jqXHR){
+                            $('#un').empty();
+                            $('#ln').empty();
+                            $('#deleteuser').css('visibility', 'hidden');
+                            $('#updateuser').css('visibility', 'hidden');
+                            $('#username').val('');
+                        },
+                        type: 'DELETE'
+                    });
                 });
                 
                 $('#createuser').click(function(){
