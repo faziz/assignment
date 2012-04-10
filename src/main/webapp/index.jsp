@@ -21,18 +21,7 @@
                             alert('Error occurred: ' + errorThrown);
                         },
                         success: function(data, textStatus, jqXHR){
-                            $('#uuid').val( data.id);
-                            $('#uuaid').val( data.address.id);
-                            $('#uun').val( data.username);
-                            $('#ufn').val( data.firstname);
-                            $('#uln').val( data.lastname);
-                            $('#umn').val( data.middlename);
-                            $('#up').val( data.password);
-                            $('#uat').val( data.apiToken);
-                            $('#ua1').val( data.address.address1);
-                            $('#ua2').val( data.address.address2);
-                            $('#us').val( data.address.state);
-                            $('#uc').val( data.address.city);
+                            loadUserUpdateForm(data);
                             
                             $('#deleteuser').css('visibility', 'visible');
                             $('#updateuser').css('visibility', 'visible');
@@ -41,9 +30,68 @@
                     });
                 });
                 
+                function loadUserUpdateForm(data){
+                    $('#uuid').val( data.id);
+                    $('#uuaid').val( data.address.id);
+                    $('#uun').val( data.username);
+                    $('#ufn').val( data.firstname);
+                    $('#uln').val( data.lastname);
+                    $('#umn').val( data.middlename);
+                    $('#up').val( data.password);
+                    $('#uat').val( data.apiToken);
+                    $('#ua1').val( data.address.address1);
+                    $('#ua2').val( data.address.address2);
+                    $('#us').val( data.address.state);
+                    $('#uc').val( data.address.city);
+                }
+                
                 $('#updateuser').click(function(){
-                    alert('Not implemented yet.');
+                    var uid = $('#uuid').val();
+                    var uaid = $('#uuaid').val();
+                    var un = $('#uun').val();
+                    var fn = $('#ufn').val();
+                    var ln = $('#uln').val();
+                    var mn = $('#umn').val();
+                    var pwd = $('#up').val();
+                    var tok = $('#uat').val();
+                    var a1 = $('#ua1').val();
+                    var a2 = $('#ua2').val();
+                    var st = $('#us').val();
+                    var ct = $('#uc').val();
+                    
+                    var user = getUserForUpdate(uid, uaid, un, fn, ln, mn, pwd, tok, a1, a2, ct, st);
+                    
+                    $.ajax('${pageContext.servletContext.contextPath}/api/users/?banckle-username-token=admin&banckle-password-token=adminpwd&banckle-api-token=token', {
+                        contentType: 'application/json',
+                        data: user,
+                        dataType: 'json',
+                        error: function(jqXHR, textStatus, errorThrown){
+                            alert('Error occurred: ' + errorThrown);
+                        },
+                        success: function(data, textStatus, jqXHR){
+                            loadUserUpdateForm(data);
+                            alert('User information updated.');
+                        },
+                        type: 'PUT'
+                    });
                 });
+                
+                function getUserForUpdate(uid, uaid, un, fn, ln , mn, pwd, tok, add1, add2, city, stat){
+                    //TODO: Use Javascript prototyping.
+                    var address = getAddressForUpdate(uaid, add1, add2, city, stat);
+                    return '{"address":'    + address + 
+                        ',"apiToken":"'     + tok + 
+                        '","password":"'    + pwd + 
+                        '","username":"'    + un  + 
+                        '","firstname":"'   + fn  + 
+                        '","lastname":"'    + ln  + 
+                        '","middlename":"'  + mn  + 
+                        '","id":'           + uid + '}';
+                }
+                
+                function getAddressForUpdate(uaid, add1, add2, city, stat){
+                    return '{"id":' + uaid + ',"state":"' + stat + '","address1":"' + add1 + '","address2":"' + add2 + '","city":"' + city + '"}';
+                }
                 
                 $('#deleteuser').click(function(){
                     var username = $('#username').val();
@@ -77,7 +125,7 @@
                     var city = $('#cc').val();
                     var stat = $('#cs').val();
 
-                    var user = getUser(un, fn, ln, mn, pwd, tok, 
+                    var user = getNewUser(un, fn, ln, mn, pwd, tok, 
                     add1, add2, city, stat);
                     
                     $.ajax('${pageContext.servletContext.contextPath}/api/users/?banckle-username-token=admin&banckle-password-token=adminpwd&banckle-api-token=token', {
@@ -94,9 +142,9 @@
                     });
                 });
 
-                function getUser(un, fn, ln , mn, pwd, tok, add1, add2, city, stat){
+                function getNewUser(un, fn, ln , mn, pwd, tok, add1, add2, city, stat){
                     //TODO: Use Javascript prototyping.
-                    var address = getAddressJSON(add1, add2, city, stat);
+                    var address = getNewAddress(add1, add2, city, stat);
                     return '{"address":'    + address + 
                         ',"apiToken":"'     + tok + 
                         '","password":"'    + pwd + 
@@ -106,7 +154,7 @@
                         '","middlename":"'  + mn + '"}';
                 }
                 
-                function getAddressJSON(add1, add2, city, stat){
+                function getNewAddress(add1, add2, city, stat){
                     return '{"state":"' + stat + '","address1":"' + add1 + '","address2":"' + add2 + '","city":"' + city + '"}';
                 }
             });            
