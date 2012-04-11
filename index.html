@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Assignment : A sample appliaction to show off REST web application using JEE6, JAXB, Jackson and simple JQuery." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Assignment</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/faziz/assignment">Fork Me on GitHub</a>
+
+          <h1 id="project_title">Assignment</h1>
+          <h2 id="project_tagline">A sample appliaction to show off REST web application using JEE6, JAXB, Jackson and simple JQuery.</h2>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/faziz/assignment/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/faziz/assignment/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h3>Welcome to RESTfull sample web application.</h3>
+
+<p>The idea is basically to come up with a general framework where any developer can drop in custom annotated Java classes and those be available as RESTified web services, supporting both XML and JSON serialization.</p>
+
+<p>Ideally I would have rather used JEE6 with JAX-RS be done with everything, but due to some restrictions on available technologies to be used, I was not to use JAX-RS.</p>
+
+<p>The project is built using Apache Maven, JDK 6, JPA 2, Glassfish V3 with JEE6 but with out JAX-RS because it needed to provide custom annotation support. Netbeans IDE was used to help in develop and deploy the application, but there is dependency on the IDE. Maven build is completely agnostic to any application server.</p>
+
+<p>The application workflow is very simple. </p>
+
+<p><strong>org.faziz.assignment.web.LoadMetaDataListener</strong> is the application context listener that scans the classes, at the application startup, in <strong>org.faziz.assignment.service</strong> package and look for custom annotation <strong><a href="https://github.com/export" class="user-mention">@export</a></strong>, caches all the meta data in application context.</p>
+
+<p><strong>org.faziz.assignment.web.RestifiedServlet</strong> is used as the REST request processing servlet. It dispatches the request 
+to appropriate request handler by looking at 
+1. HTTP method used (PUT, GET, POST, DELETE) and,
+2. Request URI.
+If appropriate handler is found it executes the requests, and return the data in either XML or JSON format, depending on the the request <strong>Content-Type</strong> used.</p>
+
+<p>On the web UI side is a simple HTML page with JQuery providing interactivity with the page and the server.</p>
+
+<h3>How to deploy.</h3>
+
+<p>If you are using Netbeans 7.x with GF V3, you just need to register the server with the project after that you should be able to Run-Debug the application from the IDE. If you don't have the IDE you can build from provided Maven build using the usual <strong>maven install</strong> command from the command prompt and manually deploy the application.</p>
+
+<p>This application can only deploy on JEE6 web profile compliant web servers, since I am CDI and annotated context listener, however with little tweaks you should be able to run it on any web container.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Assignment maintained by <a href="https://github.com/faziz">faziz</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-30760766-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
