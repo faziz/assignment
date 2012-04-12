@@ -1,6 +1,5 @@
 package org.faziz.assignment.web;
 
-import org.faziz.assignment.utils.ApplicationConstants;
 import com.google.common.collect.Table;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,6 +22,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.UserTransaction;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -34,6 +35,7 @@ import org.codehaus.jackson.xc.JaxbAnnotationIntrospector;
 import org.faziz.assignment.service.SecurityService;
 import org.faziz.assignment.service.exception.UnauthorizedAccessException;
 import org.faziz.assignment.service.meta.HttpMetod;
+import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
 
 /**
@@ -53,6 +55,8 @@ public class RestifiedServlet extends HttpServlet {
     @EJB
     private SecurityService securityService;
     
+    @Resource 
+    Validator validator;
     /**
      * Processes requests for both HTTP
      * <code>GET</code> and
@@ -102,7 +106,8 @@ public class RestifiedServlet extends HttpServlet {
     
     private final void writeContent(final Object data, final Writer writer, final String contentType) 
             throws IOException, JAXBException{
-        if( "application/json".equalsIgnoreCase(contentType)){
+        contentType.contains("application/json");
+        if( contentType.contains("application/json")){
             writeJSON(data, writer);
         }else{
             writeXML(data, writer);
@@ -256,7 +261,8 @@ public class RestifiedServlet extends HttpServlet {
      * @throws InvocationTargetException
      * @throws IOException 
      */
-    private final Object invokeService(final HttpServletRequest request, final ServiceMetaData metaData) throws NoSuchMethodException, 
+    private final Object invokeService(final HttpServletRequest request, 
+        final ServiceMetaData metaData) throws NoSuchMethodException, 
             InstantiationException, 
             IllegalAccessException, 
             IllegalArgumentException, 
@@ -277,8 +283,10 @@ public class RestifiedServlet extends HttpServlet {
         
         Object[] methodInputParameters = null;
         if( parameterTypes.length > 1){
-            methodInputParameters = new Object[]{parameters, 
-                readData(postedData, parameterTypes[1])};
+            Object inputParameter = readData(postedData, parameterTypes[1]);
+            if( metaData.getHttpMethod() == HttpMetod.POST || metaData.getHttpMethod() == HttpMetod.PUT)
+                validate(inputParameter);
+            methodInputParameters = new Object[]{parameters, inputParameter};
         }else{
             methodInputParameters = new Object[]{parameters};
         }
@@ -404,5 +412,22 @@ public class RestifiedServlet extends HttpServlet {
         }
         
         return metaData;
+    }
+
+    /**
+     * Validates the parameters using JSR-303 APIs.
+     * 
+     * @param inputParameter 
+     * @throws ConstraintViolationException if bean violates 
+     *  validation constraints.
+     */
+    private final void validate(Object inputParameter) {
+        Set constraints = validator.validate(inputParameter);
+        if( constraints.isEmpty() == false){
+            for (Object constraint : constraints) {
+                logger.log(Level.INFO, "Constraint: {0}", constraint);
+            }
+            throw new ConstraintViolationException("Constraint violation.", constraints);
+        }
     }
 }
