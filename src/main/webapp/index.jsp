@@ -195,11 +195,58 @@
                         },
                         type: 'PUT'
                     });
+                });
+                $('#addaddress').click(function(){
+                    var uid = $('#uuid').val();
+                    var a1 = $('#ua1').val();
+                    var a2 = $('#ua2').val();
+                    var st = $('#us').val();
+                    var ct = $('#uc').val();
                     
+                    var address = getNewAddress(a1, a2, ct, st);
+                    
+                    var url = '${pageContext.servletContext.contextPath}/api/users/' + 
+                        uid + 
+                        '/address/?banckle-username-token=admin&banckle-password-token=adminpwd&banckle-api-token=token';
+                    
+                    $.ajax(url, {
+                        contentType: 'application/json',
+                        data: address,
+                        dataType: 'json',
+                        error: function(jqXHR, textStatus, errorThrown){
+                            alert('Error occurred: ' + errorThrown);
+                        },
+                        success: function(address, textStatus, jqXHR){
+                            alert('Address added.');
+                            loadUserAddressUpdateForm(address);
+                        },
+                        type: 'POST'
+                    });
                 });
-                $('#addaddress').click(function(){                    
-                });
-                $('#getaddress').click(function(){                    
+                $('#getaddress').click(function(){
+                    var uid = $('#uuid').val();
+//                    var a1 = $('#ua1').val();
+//                    var a2 = $('#ua2').val();
+//                    var st = $('#us').val();
+//                    var ct = $('#uc').val();
+//                    
+//                    var address = getNewAddress(a1, a2, ct, st);
+                    
+                    var url = '${pageContext.servletContext.contextPath}/api/users/' + 
+                        uid + 
+                        '/address';
+                    
+                    $.ajax(url, {
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        error: function(jqXHR, textStatus, errorThrown){
+                            alert('Error occurred: ' + errorThrown);
+                        },
+                        success: function(address, textStatus, jqXHR){
+                            loadUserAddressUpdateForm(address);
+                        },
+                        type: 'GET'
+                    });
                 });
             });            
         </script>

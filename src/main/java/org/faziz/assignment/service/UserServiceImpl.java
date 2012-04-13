@@ -72,14 +72,11 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method = HttpMetod.PUT, name = "/users/*/address", authenticate = true)
     public Address updateUserProfile(Map<String, String[]> param, int userId, Address address) {
-        checkArgument( userId < 1, "User id not found.");
+//        checkArgument( userId < 1, "User id " + userId + " not found.");
         checkNotNull(address, "Please provide address to update.");
         
         User user =  entityManager.find(User.class, userId);
-        user.getAddress().setAddress1(address.getAddress1());
-        user.getAddress().setAddress2(address.getAddress2());
-        user.getAddress().setCity(address.getCity());
-        user.getAddress().setState(address.getState());
+        user.setAddress(address);
         
         return updateUser(param, user).getAddress();
     }
@@ -87,14 +84,15 @@ public class UserServiceImpl extends AbstractService implements UserService{
     @Override
     @Export(method= HttpMetod.POST, name="/users/*/address", authenticate=true)
     public Address addAddress(Map<String, String[]> param, int userId, Address address) {
+        entityManager.persist(address);
         return updateUserProfile(param, userId, address);
     }
 
     @Override
-    @Export(method= HttpMetod.GET, name="/users/*/address", authenticate=true)
+    @Export(method= HttpMetod.GET, name="/users/*/address", authenticate=false)
     public Address getAdress(Map<String, String[]> param, int userId) {
-        checkArgument( userId < 1, "User id not found.");
+//        checkArgument( userId < 1, "User id not found.");
         
-        return getUser(param, new User( userId)).getAddress();
+        return entityManager.find(User.class, userId).getAddress();
     }
 }
