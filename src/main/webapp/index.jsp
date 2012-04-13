@@ -20,30 +20,37 @@
                         error: function(jqXHR, textStatus, errorThrown){
                             alert('Error occurred: ' + errorThrown);
                         },
-                        success: function(data, textStatus, jqXHR){
-                            loadUserUpdateForm(data);
+                        success: function(user, textStatus, jqXHR){
+                            loadUserUpdateForm(user);
                             
                             $('#deleteuser').css('visibility', 'visible');
                             $('#updateuser').css('visibility', 'visible');
+                            $('#updateuserprofile').css('visibility', 'visible');
+                            $('#addaddress').css('visibility', 'visible');
+                            $('#getaddress').css('visibility', 'visible');
                         },
                         type: 'GET'
                     });
                 });
                 
-                function loadUserUpdateForm(data){
-                    $('#uuid').val( data.id);
-                    $('#uuaid').val( data.address.id);
-                    $('#uun').val( data.username);
-                    $('#ufn').val( data.firstname);
-                    $('#uln').val( data.lastname);
-                    $('#umn').val( data.middlename);
-                    $('#up').val( data.password);
-                    $('#uat').val( data.apiToken);
-                    $('#ua1').val( data.address.address1);
-                    $('#ua2').val( data.address.address2);
-                    $('#us').val( data.address.state);
-                    $('#uc').val( data.address.city);
+                function loadUserUpdateForm(user){
+                    $('#uuid').val( user.id);
+                    $('#uuaid').val( user.address.id);
+                    $('#uun').val( user.username);
+                    $('#ufn').val( user.firstname);
+                    $('#uln').val( user.lastname);
+                    $('#umn').val( user.middlename);
+                    $('#up').val( user.password);
+                    $('#uat').val( user.apiToken);
+                    loadUserAddressUpdateForm(user.address);
                 }
+                function loadUserAddressUpdateForm(address){
+                    $('#ua1').val(address.address1);
+                    $('#ua2').val(address.address2);
+                    $('#us').val(address.state);
+                    $('#uc').val(address.city);
+                }
+                
                 
                 $('#updateuser').click(function(){
                     var uid = $('#uuid').val();
@@ -106,6 +113,10 @@
                         success: function(data, textStatus, jqXHR){                            
                             $('#deleteuser').css('visibility', 'hidden');
                             $('#updateuser').css('visibility', 'hidden');
+                            $('#updateuserprofile').css('visibility', 'hidden');
+                            $('#addaddress').css('visibility', 'hidden');
+                            $('#getaddress').css('visibility', 'hidden');
+                            
                             $('#username').val('');
                             $('#updateusertable input').val('');
                         },
@@ -157,6 +168,39 @@
                 function getNewAddress(add1, add2, city, stat){
                     return '{"state":"' + stat + '","address1":"' + add1 + '","address2":"' + add2 + '","city":"' + city + '"}';
                 }
+                
+                $('#updateuserprofile').click(function(){
+                    var uid = $('#uuid').val();
+                    var a1 = $('#ua1').val();
+                    var a2 = $('#ua2').val();
+                    var st = $('#us').val();
+                    var ct = $('#uc').val();
+                    
+                    var address = getNewAddress(a1, a2, ct, st);
+                    
+                    var url = '${pageContext.servletContext.contextPath}/api/users/' + 
+                        uid + 
+                        '/address/?banckle-username-token=admin&banckle-password-token=adminpwd&banckle-api-token=token';
+                    
+                    $.ajax(url, {
+                        contentType: 'application/json',
+                        data: address,
+                        dataType: 'json',
+                        error: function(jqXHR, textStatus, errorThrown){
+                            alert('Error occurred: ' + errorThrown);
+                        },
+                        success: function(address, textStatus, jqXHR){
+                            alert('Address updated.');
+                            loadUserAddressUpdateForm(address);
+                        },
+                        type: 'PUT'
+                    });
+                    
+                });
+                $('#addaddress').click(function(){                    
+                });
+                $('#getaddress').click(function(){                    
+                });
             });            
         </script>
     </head>
@@ -176,6 +220,9 @@
                             <input type="button" id="getuserbyname" value="Get user" />
                             <input type="button" id="updateuser" value="Update user" style="visibility: hidden" />
                             <input type="button" id="deleteuser" value="Delete user" style="visibility: hidden" />
+                            <input type="button" id="updateuserprofile" value="Update user profile" style="visibility: hidden" />
+                            <input type="button" id="addaddress" value="Add address" style="visibility: hidden" />
+                            <input type="button" id="getaddress" value="Get address" style="visibility: hidden" />
                         </td>
                     </tr>
                 </table>

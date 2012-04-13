@@ -17,8 +17,10 @@ public interface UserService {
     public User getUser(Map<String, String[]> param, User user);
 
     public void deleteUser(Map<String, String[]> param, User user);
+
+    public Address updateUserProfile(Map<String, String[]> param, int userId, Address address);
     
     public Address  addAddress(Map<String, String[]> param, int userId, Address address);
     
-    public Address  getAdress(Map<String, String[]> param, int addressId);
+    public Address  getAdress(Map<String, String[]> param, int userId);
 }
