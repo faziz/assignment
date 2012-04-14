@@ -24,5 +24,5 @@ CREATE TABLE user (
 ALTER TABLE user ADD CONSTRAINT user_address_fk FOREIGN KEY (ADDRESS_ID) REFERENCES address(ID) ON UPDATE NO ACTION;
 
 # Reference data for default admin.
-INSERT INTO `assignment`.address (ADDRESS1, ADDRESS2, CITY, `STATE`) VALUES ('address1', 'address2', 'Karachi', 'Sindh');
+INSERT INTO address (ADDRESS1, ADDRESS2, CITY, `STATE`) VALUES ('address1', 'address2', 'Karachi', 'Sindh');
 INSERT INTO user (USERNAME, PASSWORD, FIRSTNAME, LASTNAME, MIDDLENAME, APITOKEN, ADDRESS_ID) VALUES ('admin', 'adminpwd', 'admin', 'admin', 'admin', 'token', 1);
