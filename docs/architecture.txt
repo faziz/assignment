@@ -1,0 +1,18 @@
+The application is developed on top of Java EE 6. It uses JPA, Servlet, JAXB, and Jackson APIs for serving RESTful web services. 
+
+Application is built a with standard Apache Maven build script, with no dependency on Netbeans IDE.
+
+On application start up, org.faziz.assignment.web.LoadMetaDataListener web listener scans the classess in "org.faziz.assignment.service" package and builds a meta data for all services that are exported as REST web service using @Export annotations.
+org.faziz.assignment.web.RestifiedServlet acts as front controller servlet, listening to REST web service request and dispatching the request to mapping service according to the request URI. If no matching URI is found the servlet throws and exception and puts appropriate HTTP error code the response header.
+
+If the URI matches with a registered REST service, the servlet wraps the service call inside a user transaction and injecting and instance of entityManager so that service can use JPA APIs.
+
+The client is expected to send appropriate HTTP methods(GET, PUT, POST, DELETE) for server to determine appropriate service.
+The servlet looks for the 'Content-Type' header from the request to determine whether to return JSON or XML representation of the server resource.
+
+The project.sql file in sql directory contain a schema file, containing the project schema.
+
+The page index.html uses JQuery to interact with server using AJAX apis. 
+
+To introduce a new service the developer just have to place his service in the "org.faziz.assignment.service" package and make sure he/she extends it from AbstractService class.
+

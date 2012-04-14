@@ -1,5 +1,6 @@
 package org.faziz.assignment.service;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -8,10 +9,10 @@ import org.faziz.assignment.domain.User;
 import org.faziz.assignment.service.exception.UserNotFoundException;
 import org.faziz.assignment.service.meta.Export;
 import org.faziz.assignment.service.meta.HttpMetod;
-import static com.google.common.base.Preconditions.*;
 
 /**
- *
+ * Service used to serve user related functionality.
+ * 
  * @author faisal
  */
 public class UserServiceImpl extends AbstractService implements UserService{

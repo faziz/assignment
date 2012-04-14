@@ -1,0 +1,7 @@
+1. Install the whole development stack by installing everything from Netbeans site http://netbeans.org/downloads/index.html. Download Java EE since it has everything you will need. You can also install all these components one by one.
+2. Place MySQL JDBC driver in $GLASSFISH_HOME/glassfish/domains/domain1/lib.
+3. Modify src/main/setup/glassfish-resources.xml to setup database connection.
+4. Project is based on Apache Maven, since Netbeans supports Maven out of the box, you open the project very easily, go to File + New Project + Maven + Project with existing POM.
+5. Once the project is opened, go to project properties from File menu, and register the Glassfish server with the project from Run option of the project properties dialog.
+6. Once the project is registered with Glassfish server, go to Run menu and select Run Main Project option.
+7. On successful project run your browser will open the application.
