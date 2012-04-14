@@ -1,10 +1,7 @@
 package org.faziz.assignment.web;
 
-import com.google.common.collect.Table;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,10 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.transaction.UserTransaction;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -39,6 +32,7 @@ import org.faziz.assignment.service.exception.UnauthorizedAccessException;
 import org.faziz.assignment.service.meta.HttpMetod;
 import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
+import org.faziz.assignment.utils.URLMapper;
 
 /**
  * A front controller servlet for REST calls.
@@ -84,7 +78,7 @@ public class RestifiedServlet extends HttpServlet {
             
             tx.commit();
             
-            writeContent(result, out, contentType);
+            ApplicationUtils.writeContent(result, out, contentType);
         } catch(NoSuchRESTRequestMappingFoundException ex){
             logger.log(Level.SEVERE, "Resource not found: ", ex);
             rollback();
@@ -106,16 +100,6 @@ public class RestifiedServlet extends HttpServlet {
         }
     }
     
-    private final void writeContent(final Object data, final Writer writer, final String contentType) 
-            throws IOException, JAXBException{
-        contentType.contains("application/json");
-        if( contentType.contains("application/json")){
-            writeJSON(data, writer);
-        }else{
-            writeXML(data, writer);
-        }
-    }
-    
     private final Object processRESTRequest(final HttpServletRequest request, 
             final HttpServletResponse response, 
             final HttpMetod httpMetod) 
@@ -130,16 +114,17 @@ public class RestifiedServlet extends HttpServlet {
         String actionRequest = requestURI.substring(requestURI.indexOf("api") + 3);        
         logger.log(Level.INFO, "actionRequest: {0}", actionRequest);
         
-        Table<HttpMetod, String, ServiceMetaData> table = (Table<HttpMetod, String, ServiceMetaData>) 
-                getServletContext().getAttribute(ApplicationConstants.REQUEST_MAP);
+        URLMapper mapper = (URLMapper) getServletContext().getAttribute(
+                ApplicationConstants.REQUEST_MAP);
         
         Object result = null;
         ServiceMetaData service = null;
         
         if( httpMetod != null ){
-            service = getServiceMetaData(table, httpMetod, actionRequest);
+            service = mapper.getService(httpMetod, actionRequest);
         }else{
-            throw new IllegalArgumentException("Please privide http method type. " + HttpMetod.values());
+            throw new IllegalArgumentException("Please privide http method type. " 
+                + HttpMetod.values());
         }
         
         if(null != service) {
@@ -358,102 +343,6 @@ public class RestifiedServlet extends HttpServlet {
         
         return mapper.readValue(data, clazz);
     }
-    
-    
-
-    /**
-     * Writes JSON data to the servlet stream.
-     * @param data
-     * @param writer
-     * @throws IOException 
-     */
-    private final void writeJSON(final Object data, final Writer writer) 
-        throws IOException {
-        
-        ObjectMapper mapper = new ObjectMapper();
-        AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
-        // make deserializer use JAXB annotations (only)
-        mapper.getDeserializationConfig().setAnnotationIntrospector(introspector);
-        // make serializer use JAXB annotations (only)
-        mapper.getSerializationConfig().setAnnotationIntrospector(introspector);
-        
-        StringWriter stringWriter = new StringWriter();
-        mapper.writeValue( stringWriter, data);
-        IOUtils.write( stringWriter.toString(), writer);
-    }
-
-    /**
-     * Writes XML data to the servlet stream.
-     * @param data
-     * @param writer
-     * @throws JAXBException 
-     */
-    private final void writeXML(final Object data, final Writer writer) 
-        throws JAXBException, IOException {
-        JAXBContext context = JAXBContext.newInstance(data.getClass());
-        Marshaller marshaller = context.createMarshaller();
-        
-        StringWriter stringWriter = new StringWriter();
-        marshaller.marshal(data, stringWriter);
-        IOUtils.write( stringWriter.toString(), writer);
-    }
-
-    /**
-     * Tries to match to a given request URL with the mapping supported in the
-     * system.
-     * 
-     * TODO: HACK
-     * TODO: Not very elegant. Will have to redesign it. Will have to use REGEX
-     *  to simplify it.
-     * 
-     * @param table
-     * @param httpMetod
-     * @param actionRequest
-     * @return 
-     */
-    private final ServiceMetaData getServiceMetaData(final Table<HttpMetod, String, 
-            ServiceMetaData> table, 
-            final HttpMetod httpMetod, 
-            final String actionRequest) {
-        ServiceMetaData metaData  = table.get( httpMetod, actionRequest);
-        
-        //Lets make a pass.
-        if(null == metaData){
-            Set<String> keys = table.row(httpMetod).keySet();
-            for (String key : keys) {
-                logger.log( Level.INFO, "key: {0}", key);
-                
-                //TODO: aaargh this is so ugly i wanna puke.
-                if( key.split("/").length == actionRequest.split("/").length ){
-                    if( key.contains("/*/")){
-                        logger.log( Level.INFO, "sub-resource is required.");
-                        String[] keySplit = key.split("/");
-                        String[] actionSplit = actionRequest.split("/");
-                        
-                        //If this loop finishes it means our actionRequest matches the 
-                        //key.
-                        for (int index = 0; index < keySplit.length; index++) {
-                            String keyPart = keySplit[index];
-                            String actionPart = actionSplit[index];
-                            
-                            //Do not compare '*'
-                            if( keyPart.equals("*") == false){
-                                if(keyPart.equals(actionPart) == false){
-                                    return null;
-                                }
-                            }
-                        }
-                    }
-                }
-                metaData = table.row(httpMetod).get(key);
-                
-                if( metaData != null)
-                    break;
-            }
-        }
-        
-        return metaData;
-    }    
 
     /**
      * Retrieves data part from the URL. 

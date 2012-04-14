@@ -2,9 +2,7 @@ package org.faziz.assignment.utils;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -13,6 +11,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.map.AnnotationIntrospector;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.xc.JaxbAnnotationIntrospector;
 import org.faziz.assignment.service.meta.Export;
 import org.faziz.assignment.service.meta.HttpMetod;
 import org.faziz.assignment.web.ServiceMetaData;
@@ -24,6 +29,53 @@ import org.faziz.assignment.web.ServiceMetaData;
 public final class ApplicationUtils {
 
     private static final Logger logger = Logger.getLogger(ApplicationUtils.class.getName());
+    
+    public static void writeContent(final Object data, final Writer writer, final String contentType) 
+            throws IOException, JAXBException{
+        contentType.contains("application/json");
+        if( contentType.contains("application/json")){
+            writeJSON(data, writer);
+        }else{
+            writeXML(data, writer);
+        }
+    }
+    
+    /**
+     * Writes JSON data to the servlet stream.
+     * @param data
+     * @param writer
+     * @throws IOException 
+     */
+    private static void writeJSON(final Object data, final Writer writer) 
+        throws IOException {
+        
+        ObjectMapper mapper = new ObjectMapper();
+        AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
+        // make deserializer use JAXB annotations (only)
+        mapper.getDeserializationConfig().setAnnotationIntrospector(introspector);
+        // make serializer use JAXB annotations (only)
+        mapper.getSerializationConfig().setAnnotationIntrospector(introspector);
+        
+        StringWriter stringWriter = new StringWriter();
+        mapper.writeValue( stringWriter, data);
+        IOUtils.write( stringWriter.toString(), writer);
+    }
+
+    /**
+     * Writes XML data to the servlet stream.
+     * @param data
+     * @param writer
+     * @throws JAXBException 
+     */
+    private static void writeXML(final Object data, final Writer writer) 
+        throws JAXBException, IOException {
+        JAXBContext context = JAXBContext.newInstance(data.getClass());
+        Marshaller marshaller = context.createMarshaller();
+        
+        StringWriter stringWriter = new StringWriter();
+        marshaller.marshal(data, stringWriter);
+        IOUtils.write( stringWriter.toString(), writer);
+    }
     
     /**
      * Reads the request body and extracts JSON posted data.
@@ -59,7 +111,17 @@ public final class ApplicationUtils {
      * @param classLoader
      * @return 
      */
-    public static Table<HttpMetod, String, ServiceMetaData> processServiceClasses(
+    public static URLMapper processServiceClasses(ClassLoader classLoader) {
+        return URLMapper.getInstance(processServiceClasses1(classLoader));
+    }
+    
+    /**
+     * Prepares meta based on provided classloader.
+     * 
+     * @param classLoader
+     * @return 
+     */
+    private static Table<HttpMetod, String, ServiceMetaData> processServiceClasses1(
         ClassLoader classLoader) {
         Table<HttpMetod, String, ServiceMetaData> table = HashBasedTable.create();
         

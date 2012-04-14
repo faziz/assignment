@@ -1,12 +1,10 @@
 package org.faziz.assignment.web;
 
-import com.google.common.collect.Table;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
-import org.faziz.assignment.service.meta.HttpMetod;
 import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
 
@@ -23,11 +21,11 @@ public class LoadMetaDataListener implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        Table<HttpMetod, String, ServiceMetaData> table = ApplicationUtils.processServiceClasses(
-            sce.getServletContext().getClassLoader());
-        logger.log(Level.INFO, "Request map: ", table.size());
+        logger.log(Level.INFO, "Generating URL MAP.");
         
-        sce.getServletContext().setAttribute(ApplicationConstants.REQUEST_MAP, table);
+        sce.getServletContext().setAttribute(ApplicationConstants.REQUEST_MAP, 
+            ApplicationUtils.processServiceClasses(
+                sce.getServletContext().getClassLoader()));
     }
 
     @Override

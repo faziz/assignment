@@ -1,7 +1,5 @@
 package org.faziz.assignment.utils;
 
-import com.google.common.collect.Table;
-import javax.servlet.http.HttpServletRequest;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -51,9 +49,7 @@ public class ApplicationUtilsTest {
     public void testProcessServiceClasses() {
         System.out.println("processServiceClasses");
         ClassLoader classLoader = getClass().getClassLoader();
-
-        Table result = ApplicationUtils.processServiceClasses(classLoader);
-        assertNotNull(result);
-        assertTrue(result.size() > 0);
+        URLMapper urlMapper = ApplicationUtils.processServiceClasses(classLoader);
+        assertNotNull(urlMapper);
     }
 }
