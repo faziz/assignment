@@ -8,6 +8,8 @@ import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -39,7 +41,7 @@ import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
 
 /**
- *
+ * A front controller servlet for REST calls.
  * @author faisal
  */
 public class RestifiedServlet extends HttpServlet {
@@ -146,7 +148,7 @@ public class RestifiedServlet extends HttpServlet {
             }
             
             logger.log(Level.INFO, "metaData: {0}", service);
-            result = invokeService(request, service);
+            result = invokeService(request, service, actionRequest);
         }else{
             throw new NoSuchRESTRequestMappingFoundException(
                 "REST request mapping not found." + actionRequest);
@@ -252,6 +254,7 @@ public class RestifiedServlet extends HttpServlet {
      * 
      * @param request
      * @param metaData
+     * @param actionRequest 
      * @return Returns data if supported by the REST service else null.
      * 
      * @throws NoSuchMethodException
@@ -262,7 +265,8 @@ public class RestifiedServlet extends HttpServlet {
      * @throws IOException 
      */
     private final Object invokeService(final HttpServletRequest request, 
-        final ServiceMetaData metaData) throws NoSuchMethodException, 
+            final ServiceMetaData metaData, 
+            final String actionRequest) throws NoSuchMethodException, 
             InstantiationException, 
             IllegalAccessException, 
             IllegalArgumentException, 
@@ -278,17 +282,27 @@ public class RestifiedServlet extends HttpServlet {
         Object newInstance = constructor.newInstance(entityManager);
         
         Map<String, String[]> parameters = request.getParameterMap();        
-        String postedData = getDataFromRequest(request);
-        Class<?>[] parameterTypes = method.getParameterTypes();
+        String ajaxPostedData = getDataFromRequest(request);
+        Object[] dataFromURI = getParameterDataFromURI(actionRequest, metaData);
         
-        Object[] methodInputParameters = null;
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        Object[] methodInputParameters = new Object[parameterTypes.length];
+        methodInputParameters[0] = parameters;
+        
         if( parameterTypes.length > 1){
-            Object inputParameter = readData(postedData, parameterTypes[1]);
-            if( metaData.getHttpMethod() == HttpMetod.POST || metaData.getHttpMethod() == HttpMetod.PUT)
-                validate(inputParameter);
-            methodInputParameters = new Object[]{parameters, inputParameter};
-        }else{
-            methodInputParameters = new Object[]{parameters};
+            Object postedData = null;
+            if( StringUtils.isNotEmpty(ajaxPostedData)){
+                postedData = readData(ajaxPostedData, 
+                    parameterTypes[StringUtils.countMatches(metaData.getName(), "*") + 1]);
+            }
+            
+            int index = 1;
+            for (int dataFromURIIndex = 0; dataFromURIIndex < dataFromURI.length; dataFromURIIndex++, index++) {
+                methodInputParameters[index] = dataFromURI[dataFromURIIndex];
+            }
+            if( index < parameterTypes.length){
+                methodInputParameters[index] = postedData;
+            }
         }
         
         Object result = method.invoke(newInstance, methodInputParameters);
@@ -388,14 +402,19 @@ public class RestifiedServlet extends HttpServlet {
      * Tries to match to a given request URL with the mapping supported in the
      * system.
      * 
-     * TODO: Not very elegant. Will have to redesign it.
+     * TODO: HACK
+     * TODO: Not very elegant. Will have to redesign it. Will have to use REGEX
+     *  to simplify it.
+     * 
      * @param table
      * @param httpMetod
      * @param actionRequest
      * @return 
      */
-    private final ServiceMetaData getServiceMetaData(final Table<HttpMetod, String, ServiceMetaData> table, 
-            final HttpMetod httpMetod, final String actionRequest) {
+    private final ServiceMetaData getServiceMetaData(final Table<HttpMetod, String, 
+            ServiceMetaData> table, 
+            final HttpMetod httpMetod, 
+            final String actionRequest) {
         ServiceMetaData metaData  = table.get( httpMetod, actionRequest);
         
         //Lets make a pass.
@@ -403,15 +422,73 @@ public class RestifiedServlet extends HttpServlet {
             Set<String> keys = table.row(httpMetod).keySet();
             for (String key : keys) {
                 logger.log( Level.INFO, "key: {0}", key);
-                //TODO: HACK
-                metaData = table.row(httpMetod).get( 
-                    actionRequest.substring( 0, actionRequest.length()-1));
+                
+                //TODO: aaargh this is so ugly i wanna puke.
+                if( key.split("/").length == actionRequest.split("/").length ){
+                    if( key.contains("/*/")){
+                        logger.log( Level.INFO, "sub-resource is required.");
+                        String[] keySplit = key.split("/");
+                        String[] actionSplit = actionRequest.split("/");
+                        
+                        //If this loop finishes it means our actionRequest matches the 
+                        //key.
+                        for (int index = 0; index < keySplit.length; index++) {
+                            String keyPart = keySplit[index];
+                            String actionPart = actionSplit[index];
+                            
+                            //Do not compare '*'
+                            if( keyPart.equals("*") == false){
+                                if(keyPart.equals(actionPart) == false){
+                                    return null;
+                                }
+                            }
+                        }
+                    }
+                }
+                metaData = table.row(httpMetod).get(key);
+                
                 if( metaData != null)
                     break;
             }
         }
         
         return metaData;
+    }    
+
+    /**
+     * Retrieves data part from the URL. 
+     * 
+     * @param actionRequest
+     * @param metaData
+     * @return 
+     */
+    private final Object[] getParameterDataFromURI(String actionRequest, ServiceMetaData metaData) {
+        List data = new ArrayList();
+        String[] handlerSplit = metaData.getName().split("/");
+        String[] actionSplit = actionRequest.split("/");
+        //If this loop finishes it means our actionRequest matches the 
+        //key.
+        Class<?>[] parameterTypes = metaData.getMethod().getParameterTypes();
+        int inputCount = 0;
+        for (int index = 0; index < handlerSplit.length; index++) {
+            String keyPart = handlerSplit[index];
+            String actionPart = actionSplit[index];
+
+            //Do not compare '*'
+            if( keyPart.equals("*") == true){
+                inputCount++;
+                Class<?> clazz = parameterTypes[inputCount];
+                if( Integer.TYPE == clazz){
+                    logger.log(Level.INFO, "Integer input? {0}", actionPart); 
+                    data.add(Integer.valueOf(actionSplit[index]));
+                }else{
+                    data.add(actionSplit[index]);
+                }
+                
+            }
+        }
+        
+        return data.toArray( new Object[data.size()]);
     }
 
     /**
