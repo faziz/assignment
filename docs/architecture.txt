@@ -1,4 +1,4 @@
-The application is developed on top of Java EE 6. It uses JPA, Servlet, JAXB, and Jackson APIs for serving RESTful web services. 
+The application is developed on top of Java EE 6. It uses JPA, CDI, Validation (JSR-303), Servlet, JAXB, and Jackson APIs for serving RESTful web services. 
 
 Application is built a with standard Apache Maven build script, with no dependency on Netbeans IDE.
 
