@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.UserTransaction;
-import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.AnnotationIntrospector;
@@ -103,12 +102,7 @@ public class RestifiedServlet extends HttpServlet {
     private final Object processRESTRequest(final HttpServletRequest request, 
             final HttpServletResponse response, 
             final HttpMetod httpMetod) 
-        throws NoSuchMethodException, 
-            InstantiationException, 
-            IllegalAccessException, 
-            IllegalArgumentException, 
-            InvocationTargetException, 
-            IOException{
+        throws Exception{
         
         String requestURI = request.getRequestURI();
         String actionRequest = requestURI.substring(requestURI.indexOf("api") + 3);        
@@ -251,12 +245,7 @@ public class RestifiedServlet extends HttpServlet {
      */
     private final Object invokeService(final HttpServletRequest request, 
             final ServiceMetaData metaData, 
-            final String actionRequest) throws NoSuchMethodException, 
-            InstantiationException, 
-            IllegalAccessException, 
-            IllegalArgumentException, 
-            InvocationTargetException, 
-            IOException {
+            final String actionRequest) throws Exception {
         logger.info("Invoking service...");
         
         Method method = metaData.getMethod();
@@ -264,36 +253,48 @@ public class RestifiedServlet extends HttpServlet {
              EntityManager.class);
         
         EntityManager entityManager = entityManagerFactory.createEntityManager();
-        Object newInstance = constructor.newInstance(entityManager);
+        Object result = null;
+        Exception ex = null;
         
-        Map<String, String[]> parameters = request.getParameterMap();        
-        String ajaxPostedData = getDataFromRequest(request);
-        Object[] dataFromURI = getParameterDataFromURI(actionRequest, metaData);
+        try{
+            Object newInstance = constructor.newInstance(entityManager);
         
-        Class<?>[] parameterTypes = method.getParameterTypes();
-        Object[] methodInputParameters = new Object[parameterTypes.length];
-        methodInputParameters[0] = parameters;
-        
-        if( parameterTypes.length > 1){
-            Object postedData = null;
-            if( StringUtils.isNotEmpty(ajaxPostedData)){
-                postedData = readData(ajaxPostedData, 
-                    parameterTypes[StringUtils.countMatches(metaData.getName(), "*") + 1]);
+            Map<String, String[]> parameters = request.getParameterMap();        
+            String ajaxPostedData = getDataFromRequest(request);
+            Object[] dataFromURI = getParameterDataFromURI(actionRequest, metaData);
+
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            Object[] methodInputParameters = new Object[parameterTypes.length];
+            methodInputParameters[0] = parameters;
+
+            if( parameterTypes.length > 1){
+                Object postedData = null;
+                if( StringUtils.isNotEmpty(ajaxPostedData)){
+                    postedData = readData(ajaxPostedData, 
+                        parameterTypes[StringUtils.countMatches(metaData.getName(), "*") + 1]);
+                    
+                    if( metaData.getHttpMethod() == HttpMetod.POST || metaData.getHttpMethod() == HttpMetod.PUT)
+                        ApplicationUtils.validate(validator, postedData);
+                }
+
+                int index = 1;
+                for (int dataFromURIIndex = 0; dataFromURIIndex < dataFromURI.length; dataFromURIIndex++, index++) {
+                    methodInputParameters[index] = dataFromURI[dataFromURIIndex];
+                }
+                if( index < parameterTypes.length){
+                    methodInputParameters[index] = postedData;
+                }
             }
-            
-            int index = 1;
-            for (int dataFromURIIndex = 0; dataFromURIIndex < dataFromURI.length; dataFromURIIndex++, index++) {
-                methodInputParameters[index] = dataFromURI[dataFromURIIndex];
-            }
-            if( index < parameterTypes.length){
-                methodInputParameters[index] = postedData;
-            }
+
+            result = method.invoke(newInstance, methodInputParameters);
+        }catch(Exception exception){
+            ex = exception;
+        }finally{
+            entityManager.flush();
+            entityManager.close();
         }
-        
-        Object result = method.invoke(newInstance, methodInputParameters);
-        
-        entityManager.flush();
-        entityManager.close();
+        if(null != ex )
+            throw ex;
         
         return result;
     }
@@ -378,22 +379,5 @@ public class RestifiedServlet extends HttpServlet {
         }
         
         return data.toArray( new Object[data.size()]);
-    }
-
-    /**
-     * Validates the parameters using JSR-303 APIs.
-     * 
-     * @param inputParameter 
-     * @throws ConstraintViolationException if bean violates 
-     *  validation constraints.
-     */
-    private final void validate(Object inputParameter) {
-        Set constraints = validator.validate(inputParameter);
-        if( constraints.isEmpty() == false){
-            for (Object constraint : constraints) {
-                logger.log(Level.INFO, "Constraint: {0}", constraint);
-            }
-            throw new ConstraintViolationException("Constraint violation.", constraints);
-        }
     }
 }

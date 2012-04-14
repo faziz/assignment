@@ -8,9 +8,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -228,5 +231,23 @@ public final class ApplicationUtils {
         metaData.setMethod(method);
         
         table.put(meta.method(), meta.name(), metaData);
+    }
+    
+    /**
+     * Validates the parameters using JSR-303 APIs.
+     * 
+     * @param validator 
+     * @param inputParameter 
+     * @throws ConstraintViolationException if bean violates 
+     *  validation constraints.
+     */
+    public static void validate(Validator validator, Object inputParameter) {
+        Set constraints = validator.validate(inputParameter);
+        if( constraints.isEmpty() == false){
+            for (Object constraint : constraints) {
+                logger.log(Level.INFO, "Constraint: {0}", constraint);
+            }
+            throw new ConstraintViolationException("Constraint violation.", constraints);
+        }
     }
 }
