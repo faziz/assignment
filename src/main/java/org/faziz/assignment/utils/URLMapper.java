@@ -38,10 +38,9 @@ public final class URLMapper {
      * TODO: Not very elegant. Will have to redesign it. Will have to use REGEX
      *  to simplify it.
      * 
-     * @param table
      * @param httpMetod
      * @param actionRequest
-     * @return 
+     * @return ServiceMetaData
      */
     public final ServiceMetaData getService( 
             final HttpMetod httpMetod, 

@@ -33,9 +33,17 @@ public final class ApplicationUtils {
 
     private static final Logger logger = Logger.getLogger(ApplicationUtils.class.getName());
     
+    /**
+     * Writes either JSON or XML representation of data object to the 
+     * writer based on the contentType.
+     * 
+     * @param data
+     * @param writer
+     * @param contentType
+     * @throws Exception
+     */
     public static void writeContent(final Object data, final Writer writer, final String contentType) 
-            throws IOException, JAXBException{
-        contentType.contains("application/json");
+            throws Exception{
         if( contentType.contains("application/json")){
             writeJSON(data, writer);
         }else{
@@ -44,7 +52,7 @@ public final class ApplicationUtils {
     }
     
     /**
-     * Writes JSON data to the servlet stream.
+     * Writes JSON data to the writer.
      * @param data
      * @param writer
      * @throws IOException 
@@ -65,7 +73,7 @@ public final class ApplicationUtils {
     }
 
     /**
-     * Writes XML data to the servlet stream.
+     * Writes XML data to the writer.
      * @param data
      * @param writer
      * @throws JAXBException 
@@ -83,8 +91,8 @@ public final class ApplicationUtils {
     /**
      * Reads the request body and extracts JSON posted data.
      * 
-     * @param req
-     * @return 
+     * @param req HttpServletRequest
+     * @return extracted data from HTTP request body.
      */
     public static String getPostData(HttpServletRequest req) {
         StringBuilder sb = new StringBuilder();
@@ -112,7 +120,7 @@ public final class ApplicationUtils {
      * Prepares meta based on provided classloader.
      * 
      * @param classLoader
-     * @return 
+     * @return URLMapper
      */
     public static URLMapper processServiceClasses(ClassLoader classLoader) {
         return URLMapper.getInstance(processServiceClasses1(classLoader));
@@ -122,7 +130,7 @@ public final class ApplicationUtils {
      * Prepares meta based on provided classloader.
      * 
      * @param classLoader
-     * @return 
+     * @return table containing URL->Service mapping.
      */
     private static Table<HttpMetod, String, ServiceMetaData> processServiceClasses1(
         ClassLoader classLoader) {

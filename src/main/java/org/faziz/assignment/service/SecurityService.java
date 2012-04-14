@@ -11,7 +11,7 @@ public interface SecurityService {
      * @param userName
      * @param password
      * @param apiToken
-     * @return 
+     * @return true if the credentials matches or false.
      */
     public boolean isAuthentic(String userName, String password, String apiToken);
 }
