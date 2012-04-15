@@ -27,11 +27,10 @@ import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
 import org.faziz.assignment.utils.ServiceLocator;
 import org.faziz.assignment.utils.URLMapper;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.interceptor.DefaultTransactionAttribute;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * A front controller servlet for REST calls.
@@ -54,32 +53,31 @@ public class RestifiedServlet extends HttpServlet {
     protected void processRequest(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        PrintWriter out = response.getWriter();
-        
-        //Setting up JPA tx support.
-        PlatformTransactionManager transactionManager = ServiceLocator.getTransactionManager();
-        DefaultTransactionDefinition def = new DefaultTransactionAttribute();
-        def.setName("transaction-" + System.currentTimeMillis());
-        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        TransactionStatus tx = transactionManager.getTransaction(def);
-        
-        EntityManagerFactory entityManagerFactory = ServiceLocator.getEntityManagerFactory();
-        logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
+        PrintWriter out = response.getWriter();       
         
         try {
-            Object result = processRESTRequest(request, response, 
-                    HttpMetod.valueOf(request.getMethod()), entityManagerFactory);            
-            transactionManager.commit(tx);
+            //Setting up JPA tx support.
+            JpaTransactionManager transactionManager = (JpaTransactionManager) ServiceLocator.getTransactionManager();
+            EntityManagerFactory entityManagerFactory = transactionManager.getEntityManagerFactory();
+            logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
+            
+            TransactionCallbackHandler handler = new TransactionCallbackHandler(request, response, 
+                    HttpMetod.valueOf(request.getMethod()), 
+                    entityManagerFactory);
+            TransactionTemplate template = new TransactionTemplate(transactionManager);            
+            Object result = template.execute(handler);
             
             String contentType = getContentType(request);
             ApplicationUtils.writeContent(result, out, contentType);
-        } catch(NoSuchRESTRequestMappingFoundException ex){
-            logger.log(Level.SEVERE, "Resource not found: ", ex);
-            transactionManager.rollback(tx);
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, ex.getMessage());
+        }catch(IllegalStateException exception) {
+            logger.log(Level.SEVERE, "Exception occurred: ", exception);
+            if( exception.getCause() instanceof NoSuchRESTRequestMappingFoundException){
+                logger.log(Level.SEVERE, "Resource not found: ", exception);
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, exception.getMessage());
+            }
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, exception.getMessage());
         }catch(Exception ex){
             logger.log(Level.SEVERE, "Exception occurred: ", ex);
-            transactionManager.rollback(tx);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
         }finally {            
             out.close();
@@ -374,5 +372,34 @@ public class RestifiedServlet extends HttpServlet {
         }
         
         return data.toArray( new Object[data.size()]);
+    }
+    
+    final class TransactionCallbackHandler implements TransactionCallback{
+
+        private HttpServletRequest request = null; 
+        private HttpServletResponse response = null;
+        private HttpMetod httpMetod = null; 
+        private EntityManagerFactory entityManagerFactory = null;
+        
+        public TransactionCallbackHandler(HttpServletRequest request, HttpServletResponse response, 
+                    HttpMetod httpMetod, EntityManagerFactory entityManagerFactory) {
+            this.request = request;
+            this.response = response;
+            this.httpMetod = httpMetod;
+            this.entityManagerFactory = entityManagerFactory;
+        }        
+        
+        @Override
+        public Object doInTransaction(TransactionStatus status) {
+            Object result = null;
+            try {
+                result = processRESTRequest(request, response, httpMetod, entityManagerFactory);
+            } catch (Exception ex) {
+                throw new IllegalStateException(ex);
+            }
+            
+            return result;
+        }
+        
     }
 }

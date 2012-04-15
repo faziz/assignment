@@ -13,7 +13,7 @@
         <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.version>3.1.0.RELEASE</spring.version>
-        <url>jdbc:mysql:localhost:3306/assignment</url>
+        <url>jdbc:mysql://localhost:3306/assignment</url>
         <driverClassName>com.mysql.jdbc.Driver</driverClassName>
         <username>root</username>
         <password>str0ng</password>
