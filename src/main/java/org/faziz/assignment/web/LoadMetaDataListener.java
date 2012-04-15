@@ -4,7 +4,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
 
@@ -13,7 +12,6 @@ import org.faziz.assignment.utils.ApplicationUtils;
  *
  * @author faisal
  */
-@WebListener()
 public class LoadMetaDataListener implements ServletContextListener {
 
     private static final Logger logger = Logger.getLogger(
@@ -25,7 +23,7 @@ public class LoadMetaDataListener implements ServletContextListener {
         
         sce.getServletContext().setAttribute(ApplicationConstants.REQUEST_MAP, 
             ApplicationUtils.processServiceClasses(
-                sce.getServletContext().getClassLoader()));
+                this.getClass().getClassLoader()));
     }
 
     @Override

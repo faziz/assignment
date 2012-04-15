@@ -136,6 +136,7 @@ public final class ApplicationUtils {
         ClassLoader classLoader) {
         Table<HttpMetod, String, ServiceMetaData> table = HashBasedTable.create();
         
+        logger.log(Level.INFO, "classLoader: {0}", classLoader);
         try {
             Class[] classes = getClasses("org.faziz.assignment.service", classLoader);
             for (Class clazz : classes) {

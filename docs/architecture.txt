@@ -12,7 +12,7 @@ The servlet looks for the 'Content-Type' header from the request to determine wh
 
 The project.sql file in sql directory contain a schema file, containing the project schema.
 
-The page index.html uses JQuery to interact with server using AJAX apis. 
+The page index.jsp uses JQuery to interact with server using AJAX apis. 
 
 To introduce a new service the developer just have to place his service in the "org.faziz.assignment.service" package and make sure he/she extends it from AbstractService class.
 

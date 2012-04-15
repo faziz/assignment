@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
-import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
@@ -20,7 +19,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.transaction.UserTransaction;
 import javax.validation.Validator;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.AnnotationIntrospector;
@@ -44,10 +42,10 @@ public class RestifiedServlet extends HttpServlet {
     @PersistenceUnit(name="assignment")
     private EntityManagerFactory entityManagerFactory;
     
-    @Resource
-    private UserTransaction tx;
+//    @Resource
+//    private UserTransaction tx;
     
-    @EJB
+//    @EJB
     private SecurityService securityService;
     
     @Resource 
@@ -70,12 +68,12 @@ public class RestifiedServlet extends HttpServlet {
             logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
             
             String contentType = getContentType(request);
-            tx.begin();
+//            tx.begin();
             
             Object result = processRESTRequest(request, response, 
                     HttpMetod.valueOf(request.getMethod()));
             
-            tx.commit();
+//            tx.commit();
             
             ApplicationUtils.writeContent(result, out, contentType);
         } catch(NoSuchRESTRequestMappingFoundException ex){
@@ -92,11 +90,11 @@ public class RestifiedServlet extends HttpServlet {
     }
     
     private final void rollback(){
-        try {
-            tx.rollback();
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Exception occurred: ", ex);
-        }
+//        try {
+//            tx.rollback();
+//        } catch (Exception ex) {
+//            logger.log(Level.SEVERE, "Exception occurred: ", ex);
+//        }
     }
     
     private final Object processRESTRequest(final HttpServletRequest request, 

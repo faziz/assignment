@@ -4,6 +4,10 @@
         <servlet-name>RestifiedServlet</servlet-name>
         <servlet-class>org.faziz.assignment.web.RestifiedServlet</servlet-class>
     </servlet>
+    <listener>
+        <description>RESTful web service meta-data listener.</description>
+        <listener-class>org.faziz.assignment.web.LoadMetaDataListener</listener-class>
+    </listener>
     <servlet-mapping>
         <servlet-name>RestifiedServlet</servlet-name>
         <url-pattern>/api/*</url-pattern>

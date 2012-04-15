@@ -2,18 +2,13 @@ package org.faziz.assignment.service;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceUnit;
-import javax.persistence.Query;
+import javax.persistence.*;
 
 /**
- *
+ * Provides authentication related services.
  * @author faziz
  */
-@Stateless(name = "securityService")
+//@Stateless(name = "securityService")
 public class SecurityServiceImpl implements SecurityService {
 
     @PersistenceUnit(name = "assignment")
