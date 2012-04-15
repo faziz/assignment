@@ -31,7 +31,7 @@
     <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
         <property name="dataSource" ref="dataSource" />
         <property name="jpaVendorAdapter" ref="jpaVendorAdapter" />
-        <property name="persistenceXmlLocation" value="META-INF/persistence.xml" />
+        <property name="persistenceXmlLocation" value="classpath:META-INF/persistence.xml" />
         <property name="persistenceUnitName" value="assignmentPU" />
     </bean>
 
@@ -43,6 +43,10 @@
     
     <bean id="securityService" class="org.faziz.assignment.service.SecurityServiceImpl">
         <property name="entityManagerFactory" ref="entityManagerFactory"/> 
+    </bean>
+    
+    <bean id="validator"
+          class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">        
     </bean>
     
 </beans>

@@ -17,17 +17,21 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Validator;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.xc.JaxbAnnotationIntrospector;
-import org.faziz.assignment.service.SecurityService;
 import org.faziz.assignment.service.exception.UnauthorizedAccessException;
 import org.faziz.assignment.service.meta.HttpMetod;
 import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
+import org.faziz.assignment.utils.ServiceLocator;
 import org.faziz.assignment.utils.URLMapper;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.interceptor.DefaultTransactionAttribute;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 /**
  * A front controller servlet for REST calls.
@@ -37,17 +41,6 @@ public class RestifiedServlet extends HttpServlet {
 
     private static final Logger logger = Logger.getLogger(RestifiedServlet.class.getName());
     
-//    @PersistenceUnit(name="assignment")
-    private EntityManagerFactory entityManagerFactory;
-    
-//    @Resource
-//    private UserTransaction tx;
-    
-//    @EJB
-    private SecurityService securityService;
-    
-//    @Resource 
-    Validator validator;
     /**
      * Processes requests for both HTTP
      * <code>GET</code> and
@@ -62,25 +55,31 @@ public class RestifiedServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
+        
+        //Setting up JPA tx support.
+        PlatformTransactionManager transactionManager = ServiceLocator.getTransactionManager();
+        DefaultTransactionDefinition def = new DefaultTransactionAttribute();
+        def.setName("transaction-" + System.currentTimeMillis());
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        TransactionStatus tx = transactionManager.getTransaction(def);
+        
+        EntityManagerFactory entityManagerFactory = ServiceLocator.getEntityManagerFactory();
+        logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
+        
         try {
-            logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
+            Object result = processRESTRequest(request, response, 
+                    HttpMetod.valueOf(request.getMethod()), entityManagerFactory);            
+            transactionManager.commit(tx);
             
             String contentType = getContentType(request);
-//            tx.begin();
-            
-            Object result = processRESTRequest(request, response, 
-                    HttpMetod.valueOf(request.getMethod()));
-            
-//            tx.commit();
-            
             ApplicationUtils.writeContent(result, out, contentType);
         } catch(NoSuchRESTRequestMappingFoundException ex){
             logger.log(Level.SEVERE, "Resource not found: ", ex);
-            rollback();
+            transactionManager.rollback(tx);
             response.sendError(HttpServletResponse.SC_NOT_FOUND, ex.getMessage());
         }catch(Exception ex){
             logger.log(Level.SEVERE, "Exception occurred: ", ex);
-            rollback();
+            transactionManager.rollback(tx);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
         }finally {            
             out.close();
@@ -97,7 +96,7 @@ public class RestifiedServlet extends HttpServlet {
     
     private final Object processRESTRequest(final HttpServletRequest request, 
             final HttpServletResponse response, 
-            final HttpMetod httpMetod) 
+            final HttpMetod httpMetod, final EntityManagerFactory entityManagerFactory) 
         throws Exception{
         
         String requestURI = request.getRequestURI();
@@ -123,7 +122,7 @@ public class RestifiedServlet extends HttpServlet {
             }
             
             logger.log(Level.INFO, "metaData: {0}", service);
-            result = invokeService(request, service, actionRequest);
+            result = invokeService(request, service, entityManagerFactory, actionRequest);
         }else{
             throw new NoSuchRESTRequestMappingFoundException(
                 "REST request mapping not found." + actionRequest);
@@ -149,7 +148,7 @@ public class RestifiedServlet extends HttpServlet {
             throw new UnauthorizedAccessException();
         }
 
-        if( securityService.isAuthentic(userName, password, token) == false){
+        if( ServiceLocator.getSecurityService().isAuthentic(userName, password, token) == false){
             throw new UnauthorizedAccessException(userName);
         }
     }
@@ -240,7 +239,7 @@ public class RestifiedServlet extends HttpServlet {
      * @throws IOException 
      */
     private final Object invokeService(final HttpServletRequest request, 
-            final ServiceMetaData metaData, 
+            final ServiceMetaData metaData, EntityManagerFactory entityManagerFactory,
             final String actionRequest) throws Exception {
         logger.info("Invoking service...");
         
@@ -270,7 +269,7 @@ public class RestifiedServlet extends HttpServlet {
                         parameterTypes[StringUtils.countMatches(metaData.getName(), "*") + 1]);
                     
                     if( metaData.getHttpMethod() == HttpMetod.POST || metaData.getHttpMethod() == HttpMetod.PUT)
-                        ApplicationUtils.validate(validator, postedData);
+                        ApplicationUtils.validate(ServiceLocator.getValidator(), postedData);
                 }
 
                 int index = 1;

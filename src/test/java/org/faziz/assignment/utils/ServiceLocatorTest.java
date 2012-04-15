@@ -1,6 +1,7 @@
 package org.faziz.assignment.utils;
 
 import javax.persistence.EntityManagerFactory;
+import javax.validation.Validator;
 import org.faziz.assignment.service.SecurityService;
 import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
@@ -22,5 +23,11 @@ public class ServiceLocatorTest {
     public void testGetSecurityService() {
         SecurityService securityService = ServiceLocator.getSecurityService();
         assertNotNull(securityService);
+    }
+    
+    @Test
+    public void testGetValidator() {
+        Validator validator = ServiceLocator.getValidator();
+        assertNotNull(validator);
     }
 }

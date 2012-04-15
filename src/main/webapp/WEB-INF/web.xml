@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+    <listener>
+        <description>ServletContextListener</description>
+        <listener-class>org.faziz.assignment.web.ServicesContextListener</listener-class>
+    </listener>    
+    <listener>
+        <description>RESTful web service meta-data listener.</description>
+        <listener-class>org.faziz.assignment.web.LoadMetaDataListener</listener-class>
+    </listener>
+    
     <servlet>
         <servlet-name>RestifiedServlet</servlet-name>
         <servlet-class>org.faziz.assignment.web.RestifiedServlet</servlet-class>
@@ -8,11 +17,6 @@
         <servlet-name>RestifiedServlet</servlet-name>
         <url-pattern>/api/*</url-pattern>
     </servlet-mapping>
-    
-    <listener>
-        <description>RESTful web service meta-data listener.</description>
-        <listener-class>org.faziz.assignment.web.LoadMetaDataListener</listener-class>
-    </listener>    
     
     <session-config>
         <session-timeout>
