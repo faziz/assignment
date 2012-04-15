@@ -28,6 +28,7 @@ import org.faziz.assignment.utils.ApplicationUtils;
 import org.faziz.assignment.utils.ServiceLocator;
 import org.faziz.assignment.utils.URLMapper;
 import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -64,7 +65,9 @@ public class RestifiedServlet extends HttpServlet {
             TransactionCallbackHandler handler = new TransactionCallbackHandler(request, response, 
                     HttpMetod.valueOf(request.getMethod()), 
                     entityManagerFactory);
-            TransactionTemplate template = new TransactionTemplate(transactionManager);            
+            TransactionTemplate template = new TransactionTemplate(transactionManager);
+            template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            
             Object result = template.execute(handler);
             
             String contentType = getContentType(request);
@@ -393,7 +396,8 @@ public class RestifiedServlet extends HttpServlet {
         public Object doInTransaction(TransactionStatus status) {
             Object result = null;
             try {
-                result = processRESTRequest(request, response, httpMetod, entityManagerFactory);
+                result = processRESTRequest(request, response, 
+                        httpMetod, entityManagerFactory);
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);
             }
