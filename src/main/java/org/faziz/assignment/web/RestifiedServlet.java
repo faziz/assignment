@@ -11,10 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceUnit;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -39,7 +37,7 @@ public class RestifiedServlet extends HttpServlet {
 
     private static final Logger logger = Logger.getLogger(RestifiedServlet.class.getName());
     
-    @PersistenceUnit(name="assignment")
+//    @PersistenceUnit(name="assignment")
     private EntityManagerFactory entityManagerFactory;
     
 //    @Resource
@@ -48,7 +46,7 @@ public class RestifiedServlet extends HttpServlet {
 //    @EJB
     private SecurityService securityService;
     
-    @Resource 
+//    @Resource 
     Validator validator;
     /**
      * Processes requests for both HTTP

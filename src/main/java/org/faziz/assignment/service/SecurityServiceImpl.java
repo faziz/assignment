@@ -2,16 +2,17 @@ package org.faziz.assignment.service;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.persistence.*;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
 
 /**
  * Provides authentication related services.
  * @author faziz
  */
-//@Stateless(name = "securityService")
 public class SecurityServiceImpl implements SecurityService {
-
-    @PersistenceUnit(name = "assignment")
+    
     private EntityManagerFactory entityManagerFactory;
     
     @Override
@@ -39,5 +40,12 @@ public class SecurityServiceImpl implements SecurityService {
         }
         
         return isAuth;
+    }
+
+    /**
+     * @param entityManagerFactory the entityManagerFactory to set
+     */
+    public void setEntityManagerFactory(EntityManagerFactory entityManagerFactory) {
+        this.entityManagerFactory = entityManagerFactory;
     }
 }
