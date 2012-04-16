@@ -27,6 +27,7 @@ import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
 import org.faziz.assignment.utils.ServiceLocator;
 import org.faziz.assignment.utils.URLMapper;
+import org.springframework.orm.jpa.EntityManagerFactoryUtils;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
@@ -97,7 +98,7 @@ public class RestifiedServlet extends HttpServlet {
     
     private final Object processRESTRequest(final HttpServletRequest request, 
             final HttpServletResponse response, 
-            final HttpMetod httpMetod, final EntityManagerFactory entityManagerFactory) 
+            final HttpMetod httpMetod, final EntityManager entityManager) 
         throws Exception{
         
         String requestURI = request.getRequestURI();
@@ -123,7 +124,7 @@ public class RestifiedServlet extends HttpServlet {
             }
             
             logger.log(Level.INFO, "metaData: {0}", service);
-            result = invokeService(request, service, entityManagerFactory, actionRequest);
+            result = invokeService(request, service, entityManager, actionRequest);
         }else{
             throw new NoSuchRESTRequestMappingFoundException(
                 "REST request mapping not found." + actionRequest);
@@ -230,17 +231,13 @@ public class RestifiedServlet extends HttpServlet {
      * @param request
      * @param metaData
      * @param actionRequest 
+     * @param entityManager
      * @return Returns data if supported by the REST service else null.
      * 
-     * @throws NoSuchMethodException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws IllegalArgumentException
-     * @throws InvocationTargetException
-     * @throws IOException 
+     * @throws Exception
      */
     private final Object invokeService(final HttpServletRequest request, 
-            final ServiceMetaData metaData, EntityManagerFactory entityManagerFactory,
+            final ServiceMetaData metaData, EntityManager entityManager,
             final String actionRequest) throws Exception {
         logger.info("Invoking service...");
         
@@ -248,7 +245,6 @@ public class RestifiedServlet extends HttpServlet {
         Constructor<?> constructor = method.getDeclaringClass().getConstructor(
              EntityManager.class);
         
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         Object result = null;
         Exception ex = null;
         
@@ -396,8 +392,10 @@ public class RestifiedServlet extends HttpServlet {
         public Object doInTransaction(TransactionStatus status) {
             Object result = null;
             try {
+                EntityManager em = EntityManagerFactoryUtils.getTransactionalEntityManager(
+                        entityManagerFactory);
                 result = processRESTRequest(request, response, 
-                        httpMetod, entityManagerFactory);
+                        httpMetod, em);
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);
             }
