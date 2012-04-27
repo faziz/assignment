@@ -3,7 +3,6 @@ package org.faziz.assignment.web;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +26,7 @@ import org.faziz.assignment.utils.ApplicationConstants;
 import org.faziz.assignment.utils.ApplicationUtils;
 import org.faziz.assignment.utils.ServiceLocator;
 import org.faziz.assignment.utils.URLMapper;
+import org.springframework.orm.jpa.EntityManagerFactoryUtils;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
@@ -43,8 +43,10 @@ public class RestifiedServlet extends HttpServlet {
     
     /**
      * Processes requests for both HTTP
-     * <code>GET</code> and
-     * <code>POST</code> methods.
+     * <code>GET</code> 
+     * <code>POST</code> methods
+     * <code>PUT</code> methods
+     * <code>DELETE</code> methods.
      *
      * @param request servlet request
      * @param response servlet response
@@ -57,18 +59,8 @@ public class RestifiedServlet extends HttpServlet {
         PrintWriter out = response.getWriter();       
         
         try {
-            //Setting up JPA tx support.
-            JpaTransactionManager transactionManager = (JpaTransactionManager) ServiceLocator.getTransactionManager();
-            EntityManagerFactory entityManagerFactory = transactionManager.getEntityManagerFactory();
-            logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
-            
-            TransactionCallbackHandler handler = new TransactionCallbackHandler(request, response, 
-                    HttpMetod.valueOf(request.getMethod()), 
-                    entityManagerFactory);
-            TransactionTemplate template = new TransactionTemplate(transactionManager);
-            template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-            
-            Object result = template.execute(handler);
+            Object result = processRESTRequest(request, response, 
+                        HttpMetod.valueOf(request.getMethod()));
             
             String contentType = getContentType(request);
             ApplicationUtils.writeContent(result, out, contentType);
@@ -87,17 +79,9 @@ public class RestifiedServlet extends HttpServlet {
         }
     }
     
-    private final void rollback(){
-//        try {
-//            tx.rollback();
-//        } catch (Exception ex) {
-//            logger.log(Level.SEVERE, "Exception occurred: ", ex);
-//        }
-    }
-    
     private final Object processRESTRequest(final HttpServletRequest request, 
             final HttpServletResponse response, 
-            final HttpMetod httpMetod, final EntityManagerFactory entityManagerFactory) 
+            final HttpMetod httpMetod) 
         throws Exception{
         
         String requestURI = request.getRequestURI();
@@ -122,15 +106,24 @@ public class RestifiedServlet extends HttpServlet {
                 checkAuthorization(request);
             }
             
-            logger.log(Level.INFO, "metaData: {0}", service);
-            result = invokeService(request, service, entityManagerFactory, actionRequest);
+            JpaTransactionManager transactionManager = (JpaTransactionManager) ServiceLocator.getTransactionManager();
+            EntityManagerFactory entityManagerFactory = transactionManager.getEntityManagerFactory();
+            logger.log(Level.INFO, "entityManagerFactory: {0}", entityManagerFactory);
+            
+            TransactionCallbackHandler handler = new TransactionCallbackHandler(request, response, 
+                    actionRequest, service,
+                    entityManagerFactory);
+            TransactionTemplate template = new TransactionTemplate(transactionManager);
+            template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            
+            result = template.execute(handler);
         }else{
             throw new NoSuchRESTRequestMappingFoundException(
                 "REST request mapping not found." + actionRequest);
         }
         
         return result;
-    }
+    }    
     
     /**
      * Provides authorization assistance.
@@ -230,17 +223,13 @@ public class RestifiedServlet extends HttpServlet {
      * @param request
      * @param metaData
      * @param actionRequest 
+     * @param entityManager
      * @return Returns data if supported by the REST service else null.
      * 
-     * @throws NoSuchMethodException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws IllegalArgumentException
-     * @throws InvocationTargetException
-     * @throws IOException 
+     * @throws Exception
      */
     private final Object invokeService(final HttpServletRequest request, 
-            final ServiceMetaData metaData, EntityManagerFactory entityManagerFactory,
+            final ServiceMetaData metaData, EntityManager entityManager,
             final String actionRequest) throws Exception {
         logger.info("Invoking service...");
         
@@ -248,7 +237,6 @@ public class RestifiedServlet extends HttpServlet {
         Constructor<?> constructor = method.getDeclaringClass().getConstructor(
              EntityManager.class);
         
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         Object result = null;
         Exception ex = null;
         
@@ -380,30 +368,33 @@ public class RestifiedServlet extends HttpServlet {
     final class TransactionCallbackHandler implements TransactionCallback{
 
         private HttpServletRequest request = null; 
-        private HttpServletResponse response = null;
-        private HttpMetod httpMetod = null; 
+        private HttpServletResponse response = null;        
         private EntityManagerFactory entityManagerFactory = null;
+        private String actionRequest = null;
+        private ServiceMetaData service = null;
         
         public TransactionCallbackHandler(HttpServletRequest request, HttpServletResponse response, 
-                    HttpMetod httpMetod, EntityManagerFactory entityManagerFactory) {
+                    String actionRequest, ServiceMetaData service, EntityManagerFactory entityManagerFactory) {
             this.request = request;
             this.response = response;
-            this.httpMetod = httpMetod;
+            this.actionRequest = actionRequest;
             this.entityManagerFactory = entityManagerFactory;
+            this.service = service;
         }        
         
         @Override
         public Object doInTransaction(TransactionStatus status) {
             Object result = null;
             try {
-                result = processRESTRequest(request, response, 
-                        httpMetod, entityManagerFactory);
+                EntityManager em = EntityManagerFactoryUtils.getTransactionalEntityManager(
+                        entityManagerFactory);
+                logger.log(Level.INFO, "metaData: {0}", service);
+                result = invokeService(request, service, em, actionRequest);
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);
             }
             
             return result;
         }
-        
     }
 }
