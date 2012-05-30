@@ -1,6 +1,8 @@
-The application is developed on top of Java EE 6. It uses JPA, CDI, Validation (JSR-303), Servlet, JAXB, and Jackson APIs for serving RESTful web services. 
+The application is developed on top of Servlet API with Spring framework providing resource management. 
 
-Application is built a with standard Apache Maven build script, with no dependency on Netbeans IDE.
+It uses JPA, Validation (JSR-303), Servlet, JAXB, and Jackson APIs for serving RESTful web services. 
+
+Application is built a with standard Apache Maven build script, with no dependency on any IDE.
 
 On application start up, org.faziz.assignment.web.LoadMetaDataListener web listener scans the classess in "org.faziz.assignment.service" package and builds a meta data for all services that are exported as REST web service using @Export annotations.
 org.faziz.assignment.web.RestifiedServlet acts as front controller servlet, listening to REST web service request and dispatching the request to mapping service according to the request URI. If no matching URI is found the servlet throws and exception and puts appropriate HTTP error code the response header.
